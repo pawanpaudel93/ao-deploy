@@ -1,3 +1,11 @@
+/*
+ * This file contains code derived from the aos codebase (c) 2024 Forward Research,
+ * licensed under the Business Source License 1.1 until the Change Date, after which
+ * it will transition to MPL 2.0.
+ *
+ * https://github.com/permaweb/aos/blob/main/LICENSE
+ */
+
 // https://github.com/permaweb/aos/blob/main/src/services/loading-files.js#L30
 
 import path from 'node:path'
@@ -136,6 +144,6 @@ export function loadContract(contractPath: string) {
     return line
   }
   else {
-    throw new Error(chalk.red('ERROR: .load function requires a *.lua file'))
+    throw new Error(chalk.red('It requires a *.lua file'))
   }
 }

@@ -113,7 +113,7 @@ export async function deployContract({ name, walletPath, contractPath }: DeployA
 
   if (!processId) {
     processId = await spawn({ module, signer, tags, data, scheduler })
-    await sleep()
+    await sleep(5000)
   }
 
   const contractSrc = loadContract(contractPath)
@@ -127,7 +127,7 @@ export async function deployContract({ name, walletPath, contractPath }: DeployA
         data: contractSrc,
         signer,
       }),
-    5,
+    10,
     3000,
   )
 

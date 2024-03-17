@@ -11,7 +11,7 @@ program
   .description('A CLI tool to deploy AO contracts')
   .version('1.0.0')
   .argument('<contractPath>', 'Contract main file path to deploy')
-  .requiredOption('-n, --name <name>', 'Name of contract to deploy')
+  .option('-n, --name [name]', 'Name of contract to deploy', 'default')
   .option('-w, --wallet-path [walletPath]', 'Wallet JWK file path')
 
 program.parse(process.argv)

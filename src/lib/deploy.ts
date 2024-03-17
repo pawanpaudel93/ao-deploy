@@ -111,12 +111,12 @@ export async function deployContract({ name, walletPath, contractPath }: DeployA
   ]
   const data = '1984'
 
-  if (!processId)
+  if (!processId) {
     processId = await spawn({ module, signer, tags, data, scheduler })
+    await sleep()
+  }
 
   const contractSrc = loadContract(contractPath)
-
-  await sleep()
 
   // Load contract to process
   const messageId = await retry(

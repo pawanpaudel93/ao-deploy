@@ -3,6 +3,8 @@
 import path from 'node:path'
 import fs from 'node:fs'
 import process from 'node:process'
+
+// @ts-expect-error type missing
 import createFileTree from 'pretty-file-tree'
 import chalk from 'chalk'
 import ora from 'ora'
@@ -46,7 +48,7 @@ export function createProjectStructure(mainFile: string, cwd: string) {
       .map(v => `  ${v}`)
       .join('\n')
 
-    const requiresInMod = findRequires(modules[i].content, cwd)
+    const requiresInMod = findRequires(modules[i].content!, cwd)
 
     requiresInMod.forEach((mod) => {
       const existingMod = modules.find(m => m.name === mod.name)
@@ -78,7 +80,7 @@ export function createProjectStructure(mainFile: string, cwd: string) {
   return orderedModules
 }
 
-function findRequires(data: string, cwd: string) {
+function findRequires(data: string, cwd: string): Module[] {
   const requirePattern = /(?<=(require( *)(\n*)(\()?( *)("|'))).*(?=("|'))/g
   const requiredModules = data.match(requirePattern)?.map(
     mod => ({

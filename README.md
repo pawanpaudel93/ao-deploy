@@ -13,25 +13,25 @@ A package to deploy AO contracts.
 ### Using npm
 
 ```sh
-npm install ao-deploy
+npm install ao-deploy --save-dev
 ```
 
 ### Using pnpm
 
 ```sh
-pnpm add ao-deploy
+pnpm add ao-deploy --save-dev
 ```
 
 ### Using yarn
 
 ```sh
-yarn add ao-deploy
+yarn add ao-deploy --dev
 ```
 
 ### Using bun
 
 ```sh
-bun add ao-deploy
+bun add ao-deploy --dev
 ```
 
 ## Usage

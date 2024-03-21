@@ -10,12 +10,27 @@ export const arweave = Arweave.init({
   protocol: 'https',
 })
 
-export async function getWallet(walletPath?: fs.PathOrFileDescriptor) {
-  try {
-    if (!walletPath)
-      throw new Error('Wallet path not specified')
+/**
+ * Check if the passed argument is a valid JSON Web Key (JWK) for Arweave.
+ * @param obj - The object to check for JWK validity.
+ * @returns {boolean} True if it's a valid Arweave JWK, otherwise false.
+ */
+function isJwk(obj: any): boolean {
+  if (typeof obj !== 'object')
+    return false
+  const requiredKeys = ['n', 'e', 'd', 'p', 'q', 'dp', 'dq', 'qi']
+  return requiredKeys.every(key => key in obj)
+}
 
-    const jwk = fs.readFileSync(walletPath, 'utf8')
+export async function getWallet(walletOrPath?: fs.PathOrFileDescriptor | JWKInterface): Promise<JWKInterface> {
+  try {
+    if (!walletOrPath)
+      throw new Error('Wallet not specified')
+
+    if (isJwk(walletOrPath))
+      return walletOrPath as JWKInterface
+
+    const jwk = fs.readFileSync(walletOrPath as string, 'utf8')
     return JSON.parse(jwk)
   }
   catch (e) {

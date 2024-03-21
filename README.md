@@ -44,13 +44,19 @@ Usage: ao-deploy [options] <contractPath>
 A CLI tool to deploy AO contracts
 
 Arguments:
-  contractPath                    Contract main file path to deploy
+  contractPath                 Contract main file path to deploy
 
 Options:
-  -V, --version                   output the version number
-  -n, --name [name]               Name of contract to deploy (default: "default")
-  -w, --wallet-path [walletPath]  Wallet JWK file path
-  -h, --help                      display help for command
+  -V, --version                output the version number
+  -n, --name [name]            Name of the process to spawn (default: "default")
+  -w, --wallet [wallet]        Wallet JWK file path
+  -s, --scheduler [scheduler]  Scheduler to use for Process
+  -m, --module [module]        The module source to use to spin up Process
+  -c, --cron [interval]        Cron interval to use for Process i.e (1-minute, 5-minutes)
+  -t, --tags [tags...]         Additional tags to use when spawning Process
+  --retry-count [count]        Retry count to spawn Process (default: "10")
+  --retry-delay [delay]        Retry delay in seconds (default: "3000")
+  -h, --help                   display help for command
 ```
 
 #### Example
@@ -81,12 +87,24 @@ import { deployContract } from 'ao-deploy'
 
 async function main() {
   try {
-    const { messageId, processId } = await deployContract({ name: 'demo', walletPath: 'wallet.json', contractPath: 'process.lua' })
+    const { messageId, processId } = await deployContract(
+      {
+        name: 'demo',
+        wallet: 'wallet.json',
+        contractPath: 'process.lua',
+        tags: [{ name: 'Custom', value: 'Tag' }],
+        retry: {
+          count: 10,
+          delay: 3000,
+        },
+      },
+    )
     const processUrl = `https://ao_marton.g8way.io/#/process/${processId}`
-    console.log(`\nDeployed Process: ${processUrl} \nDeployment Message: ${processUrl}/${messageId}`)
+    const messageUrl = `${processUrl}/${messageId}`
+    console.log(`\nDeployed Process: ${processUrl} \nDeployment Message: ${messageUrl}`)
   }
   catch (error: any) {
-    console.log('\nDeploy failed!\n')
+    console.log('\nDeployment failed!\n')
     console.log(error?.message ?? 'Failed to deploy contract!')
   }
 }

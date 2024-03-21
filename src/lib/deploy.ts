@@ -5,16 +5,66 @@ import {
   spawn,
 } from '@permaweb/aoconnect'
 import Ardb from 'ardb'
-import { arweave, getWallet, getWalletAddress } from './wallet'
+import type { JWKInterface } from 'arweave/node/lib/wallet'
+import { arweave, getWallet, getWalletAddress, isArweaveAddress } from './wallet'
 import { loadContract } from './load'
 
-const ardb = new ((Ardb as any)?.default ?? Ardb)(arweave)
-
+/**
+ * Args for deployContract
+ */
 export interface DeployArgs {
+  /**
+   * Process name to spawn
+   * @default "default"
+   */
   name?: string
-  walletPath?: string
+  /**
+   * Path to contract main file
+   */
   contractPath: string
+  /**
+   * The module source to use to spin up Process
+   * @default "Fetches from `https://raw.githubusercontent.com/permaweb/aos/main/package.json`"
+   */
+  module?: string
+  /**
+   * Scheduler to use for Process
+   * @default "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA"
+   */
+  scheduler?: string
+  /**
+   * Additional tags to use for spawning Process
+   */
+  tags?: Tag[]
+  /**
+   * Cron interval to use for Process i.e (1-minute, 5-minutes)
+   */
+  cron?: string
+  /**
+   * Wallet path or JWK itself
+   */
+  wallet?: JWKInterface | string
+
+  /**
+   * Retry options
+   */
+  retry?: {
+    /**
+     * Retry count
+     * @default 10
+     */
+    count?: number
+    /**
+     * Retry delay in milliseconds
+     * @default 3000
+     */
+    delay?: number
+  }
 }
+
+export interface Tag { name: string, value: string }
+
+const ardb = new ((Ardb as any)?.default ?? Ardb)(arweave)
 
 /**
  * Retries a given function up to a maximum number of attempts.
@@ -23,26 +73,27 @@ export interface DeployArgs {
  * @param delay - The delay between attempts in milliseconds.
  * @return A Promise that resolves with the result of the function or rejects after all attempts fail.
  */
-async function retry<T>(
+async function retryWithDelay<T>(
   fn: () => Promise<T>,
   maxAttempts: number,
   delay: number = 1000,
 ): Promise<T> {
   let attempts = 0
 
-  const attempt = (): Promise<T> => {
-    return fn().catch((error) => {
+  const attempt = async (): Promise<T> => {
+    try {
+      return await fn()
+    }
+    catch (error) {
       attempts += 1
       if (attempts < maxAttempts) {
         console.log(`Attempt ${attempts} failed, retrying...`)
-        return new Promise<T>(resolve =>
-          setTimeout(() => resolve(attempt()), delay),
-        )
+        return new Promise<T>(resolve => setTimeout(() => resolve(attempt()), delay))
       }
       else {
         throw error
       }
-    })
+    }
   }
 
   return attempt()
@@ -55,6 +106,7 @@ async function sleep(delay: number = 3000) {
 async function getAos() {
   const defaultVersion = '1.10.22'
   const defaultModule = 'SBNb1qPQ1TDwpD_mboxm2YllmMLXpWw4U8P9Ff8W9vk'
+  const defaultScheduler = '_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA'
   try {
     const pkg = await (
       await fetch(
@@ -62,12 +114,13 @@ async function getAos() {
       )
     ).json() as { version: string, aos: { module: string } }
     return {
-      version: pkg?.version ?? defaultVersion,
-      module: pkg?.aos?.module ?? defaultModule,
+      aosVersion: pkg?.version ?? defaultVersion,
+      aosModule: pkg?.aos?.module ?? defaultModule,
+      aosScheduler: defaultScheduler,
     }
   }
   catch {
-    return { version: defaultVersion, module: defaultModule }
+    return { aosVersion: defaultVersion, aosModule: defaultModule, aosScheduler: defaultScheduler }
   }
 }
 
@@ -95,20 +148,37 @@ async function findProcess(name: string, aosModule: string, owner: string) {
   return tx?.id
 }
 
-export async function deployContract({ name, walletPath, contractPath }: DeployArgs) {
+export async function deployContract({ name, wallet, contractPath, tags, cron, module, scheduler, retry }: DeployArgs) {
   // Create a new process
   name = name || 'default'
-  const { version, module } = await getAos()
-  const wallet = await getWallet(walletPath)
-  const owner = await getWalletAddress(wallet)
-  let processId = await findProcess(name, module, owner)
-  const scheduler = '_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA'
+  tags = Array.isArray(tags) ? tags : []
+  retry = retry ?? { count: 10, delay: 3000 }
+
+  const { aosVersion, aosModule, aosScheduler } = await getAos()
+  module = isArweaveAddress(module) ? module! : aosModule
+  scheduler = isArweaveAddress(scheduler) ? scheduler! : aosScheduler
+
+  const walletJWK = await getWallet(wallet)
+  const owner = await getWalletAddress(walletJWK)
   const signer = createDataItemSigner(wallet)
-  const tags = [
+
+  let processId = await findProcess(name, module, owner)
+
+  tags = [
     { name: 'App-Name', value: 'aos' },
     { name: 'Name', value: name },
-    { name: 'aos-Version', value: version },
+    { name: 'aos-Version', value: aosVersion },
+    ...tags,
   ]
+  if (cron) {
+    if (/^\d+\-(second|seconds|minute|minutes|hour|hours|day|days|month|months|year|years|block|blocks|Second|Seconds|Minute|Minutes|Hour|Hours|Day|Days|Month|Months|Year|Years|Block|Blocks)$/.test(cron)) {
+      tags = [...tags, { name: 'Cron-Interval', value: cron }, { name: 'Cron-Tag-Action', value: 'Cron' },
+      ]
+    }
+    else {
+      throw new Error('Invalid cron flag!')
+    }
+  }
   const data = '1984'
 
   if (!processId) {
@@ -119,7 +189,7 @@ export async function deployContract({ name, walletPath, contractPath }: DeployA
   const contractSrc = loadContract(contractPath)
 
   // Load contract to process
-  const messageId = await retry(
+  const messageId = await retryWithDelay(
     async () =>
       message({
         process: processId,
@@ -127,8 +197,8 @@ export async function deployContract({ name, walletPath, contractPath }: DeployA
         data: contractSrc,
         signer,
       }),
-    10,
-    3000,
+    retry.count ?? 10,
+    retry.delay ?? 3000,
   )
 
   const { Output } = await result({ process: processId, message: messageId })

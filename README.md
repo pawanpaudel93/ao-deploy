@@ -55,7 +55,7 @@ Options:
   -c, --cron [interval]        Cron interval to use for Process i.e (1-minute, 5-minutes)
   -t, --tags [tags...]         Additional tags to use when spawning Process
   --retry-count [count]        Retry count to spawn Process (default: "10")
-  --retry-delay [delay]        Retry delay in seconds (default: "3000")
+  --retry-delay [delay]        Retry delay in milliseconds (default: "3000")
   -h, --help                   display help for command
 ```
 

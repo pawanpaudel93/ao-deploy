@@ -151,7 +151,6 @@ async function findProcess(name: string, aosModule: string, owner: string) {
 export async function deployContract({ name, wallet, contractPath, tags, cron, module, scheduler, retry }: DeployArgs) {
   // Create a new process
   name = name || 'default'
-  tags = Array.isArray(tags) ? tags : []
   retry = retry ?? { count: 10, delay: 3000 }
 
   const { aosVersion, aosModule, aosScheduler } = await getAos()
@@ -164,24 +163,24 @@ export async function deployContract({ name, wallet, contractPath, tags, cron, m
 
   let processId = await findProcess(name, module, owner)
 
-  tags = [
-    { name: 'App-Name', value: 'aos' },
-    { name: 'Name', value: name },
-    { name: 'aos-Version', value: aosVersion },
-    ...tags,
-  ]
-  if (cron) {
-    if (/^\d+\-(second|seconds|minute|minutes|hour|hours|day|days|month|months|year|years|block|blocks|Second|Seconds|Minute|Minutes|Hour|Hours|Day|Days|Month|Months|Year|Years|Block|Blocks)$/.test(cron)) {
-      tags = [...tags, { name: 'Cron-Interval', value: cron }, { name: 'Cron-Tag-Action', value: 'Cron' },
-      ]
-    }
-    else {
-      throw new Error('Invalid cron flag!')
-    }
-  }
-  const data = '1984'
-
   if (!processId) {
+    tags = Array.isArray(tags) ? tags : []
+    tags = [
+      { name: 'App-Name', value: 'aos' },
+      { name: 'Name', value: name },
+      { name: 'aos-Version', value: aosVersion },
+      ...tags,
+    ]
+    if (cron) {
+      if (/^\d+\-(second|seconds|minute|minutes|hour|hours|day|days|month|months|year|years|block|blocks|Second|Seconds|Minute|Minutes|Hour|Hours|Day|Days|Month|Months|Year|Years|Block|Blocks)$/.test(cron)) {
+        tags = [...tags, { name: 'Cron-Interval', value: cron }, { name: 'Cron-Tag-Action', value: 'Cron' },
+        ]
+      }
+      else {
+        throw new Error('Invalid cron flag!')
+      }
+    }
+    const data = '1984'
     processId = await spawn({ module, signer, tags, data, scheduler })
     await sleep(5000)
   }
@@ -197,8 +196,8 @@ export async function deployContract({ name, wallet, contractPath, tags, cron, m
         data: contractSrc,
         signer,
       }),
-    retry.count ?? 10,
-    retry.delay ?? 3000,
+    retry?.count ?? 10,
+    retry?.delay ?? 3000,
   )
 
   const { Output } = await result({ process: processId, message: messageId })

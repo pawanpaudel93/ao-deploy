@@ -160,7 +160,7 @@ export async function deployContract({ name, wallet, contractPath, tags, cron, m
 
   const walletJWK = await getWallet(wallet)
   const owner = await getWalletAddress(walletJWK)
-  const signer = createDataItemSigner(wallet)
+  const signer = createDataItemSigner(walletJWK)
 
   let processId = await findProcess(name, module, owner)
 

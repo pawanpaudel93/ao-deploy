@@ -31,7 +31,7 @@ program
   .argument('<contractPath>', 'Contract main file path to deploy')
   .option('-n, --name [name]', 'Name of the process to spawn', 'default')
   .option('-w, --wallet [wallet]', 'Wallet JWK file path')
-  .option('-s, --scheduler [scheduler]', 'Scheduler to use for Process')
+  .option('-s, --scheduler [scheduler]', 'Scheduler to use for Process', '_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA')
   .option('-m, --module [module]', 'The module source to use to spin up Process')
   .option('-c, --cron [interval]', 'Cron interval to use for Process i.e (1-minute, 5-minutes)')
   .option('-t, --tags [tags...]', 'Additional tags to use when spawning Process')

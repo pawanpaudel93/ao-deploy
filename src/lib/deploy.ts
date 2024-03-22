@@ -185,7 +185,7 @@ export async function deployContract({ name, wallet, contractPath, tags, cron, m
     await sleep(5000)
   }
 
-  const contractSrc = loadContract(contractPath)
+  const contractSrc = await loadContract(contractPath)
 
   // Load contract to process
   const messageId = await retryWithDelay(
@@ -200,9 +200,12 @@ export async function deployContract({ name, wallet, contractPath, tags, cron, m
     retry?.delay ?? 3000,
   )
 
-  const { Output } = await result({ process: processId, message: messageId })
+  const { Output, Error: error } = await result({ process: processId, message: messageId })
   if (Output?.data?.output)
     throw new Error(Output?.data?.output)
+
+  if (error)
+    throw new Error(error)
 
   return { processId, messageId }
 }

@@ -77,6 +77,7 @@ async function main() {
   catch (error: any) {
     console.log(chalk.red('\nDeployment failed!\n'))
     console.log(chalk.red(error?.message ?? 'Failed to deploy contract!'))
+    process.exit(1)
   }
 }
 

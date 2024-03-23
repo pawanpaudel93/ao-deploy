@@ -23,19 +23,16 @@ interface Module { name: string, path: string, content?: string }
 
 async function fileExists(path: string): Promise<boolean> {
   try {
-    await fs.access(path, constants.R_OK)
-    return true // The file exists and is readable
+    await fs.access(path, constants.F_OK | constants.R_OK)
+    return true
   }
   catch {
-    return false // The file doesn't exist, isn't readable, or another error occurred
+    return false
   }
 }
 
 async function getModulePath(module: string, cwd: string) {
   try {
-    if (['json', '.base64', '.pretty', '.utils', '.crypto'].includes(module))
-      return
-
     const modPath = path.join(cwd, `${module.replace(/\./g, '/')}.lua`)
     if (await fileExists(modPath))
       return modPath
@@ -44,10 +41,15 @@ async function getModulePath(module: string, cwd: string) {
     const command = `lua -e "${luaCode}"`
 
     const { stdout, stderr } = await execAsync(command)
+
     if (stderr)
       return
 
-    return stdout.trim()
+    if (stdout) {
+      const potentialPath = stdout.trim()
+      if (await fileExists(potentialPath))
+        return potentialPath
+    }
   }
   catch (error) {}
 }
@@ -76,7 +78,7 @@ export async function createProjectStructure(mainFile: string, cwd: string) {
   let orderedModNames = modules.map(m => m.name)
 
   for (let i = 0; i < modules.length; i++) {
-    if (modules[i].content || !(await fs.stat(modules[i].path)).isFile())
+    if (modules[i].content)
       continue
 
     modules[i].content = (await fs.readFile(modules[i].path, 'utf-8'))
@@ -123,7 +125,7 @@ async function findRequires(data: string, cwd: string): Promise<Module[]> {
       : null
   })
 
-  return (await Promise.all(requiredModules)).filter(m => !!m)
+  return (await Promise.all(requiredModules)).filter(m => !!m) as Module[]
 }
 
 export async function loadContract(contractPath: string) {
@@ -133,9 +135,9 @@ export async function loadContract(contractPath: string) {
       filePath = path.resolve(path.join(process.cwd(), contractPath))
 
     if (!(await fileExists(filePath)))
-      throw new Error(chalk.red('ERROR: file not found.'))
+      throw new Error(chalk.red(`ERROR: ${filePath} file not found.`))
 
-    console.log(chalk.green('Loading... ', contractPath))
+    console.log(chalk.green('Deploying: ', contractPath))
     let line = await fs.readFile(filePath, 'utf-8')
 
     const spinner = ora({

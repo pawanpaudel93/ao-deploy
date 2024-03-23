@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import process from 'node:process'
+import process, { emitWarning } from 'node:process'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import fs from 'node:fs'
@@ -9,6 +9,17 @@ import { Command } from 'commander'
 import { type Tag, deployContract } from './lib/deploy'
 
 const PKG_ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '../')
+
+process.emitWarning = (warning, ...args) => {
+  if (args[0] === 'ExperimentalWarning')
+    return
+
+  if (args[0] && typeof args[0] === 'object' && args[0].type === 'ExperimentalWarning')
+    return
+
+  // @ts-expect-error "experimental warning"
+  return emitWarning(warning, ...args)
+}
 
 function getVersion() {
   const packageJsonPath = path.join(PKG_ROOT, 'package.json')

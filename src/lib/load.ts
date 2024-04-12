@@ -19,7 +19,7 @@ import ora from 'ora'
 
 const execAsync = util.promisify(exec)
 
-interface Module { name: string, path: string, content?: string }
+interface Module { name: string, path: string, content?: string, dependencies?: Set<string> }
 
 async function fileExists(path: string): Promise<boolean> {
   try {
@@ -73,42 +73,54 @@ export function createExecutableFromProject(project: Module[]) {
   return contents.reduce((acc, con) => `${acc}\n\n${con.code}`, '')
 }
 
+function topologicalSort(moduleMap: Map<string, Module>) {
+  const visited = new Set<string>()
+  const result: Module[] = []
+
+  function visit(modName: string) {
+    if (visited.has(modName))
+      return
+
+    const mod = moduleMap.get(modName)
+    if (!mod)
+      throw new Error(`Module ${modName} is not found in the module map.`)
+
+    visited.add(modName)
+    mod.dependencies?.forEach(depName => visit(depName))
+    result.push(mod)
+  }
+
+  moduleMap.forEach((_, modName) => visit(modName))
+
+  return result
+}
+
 export async function createProjectStructure(mainFile: string, cwd: string) {
+  // initial set of modules
   const modules = await findRequires(mainFile, cwd)
-  let orderedModNames = modules.map(m => m.name)
+  // Create a map for quick access
+  const moduleMap: Map<string, Module> = new Map(modules.map(m => [m.name, m]))
 
-  for (let i = 0; i < modules.length; i++) {
-    if (modules[i].content)
-      continue
+  // Load and parse content for each module, and resolve dependencies
+  for (const [_, mod] of moduleMap) {
+    if (!mod.content) {
+      const fileContent = await fs.readFile(mod.path, 'utf-8')
+      mod.content = fileContent.split('\n').map(line => `  ${line}`).join('\n')
+      const requiresInMod = await findRequires(mod.content!, cwd)
 
-    modules[i].content = (await fs.readFile(modules[i].path, 'utf-8'))
-      .split('\n')
-      .map(v => `  ${v}`)
-      .join('\n')
-
-    const requiresInMod = await findRequires(modules[i].content!, cwd)
-
-    requiresInMod.forEach((mod) => {
-      const existingMod = modules.find(m => m.name === mod.name)
-      if (!existingMod)
-        modules.push(mod)
-
-      const existingName = orderedModNames.find(name => name === mod.name)
-      if (existingName)
-        orderedModNames = orderedModNames.filter(name => name !== existingName)
-
-      orderedModNames.push(existingName || mod.name)
-    })
+      for (const requirement of requiresInMod) {
+        if (!moduleMap.has(requirement.name))
+          moduleMap.set(requirement.name, requirement)
+        mod.dependencies = (mod.dependencies || new Set()).add(requirement.name)
+      }
+    }
   }
 
-  const orderedModules = []
-  for (let i = orderedModNames.length; i > 0; i--) {
-    const mod = modules.find(m => m.name === orderedModNames[i - 1])
-    if (mod && mod.content)
-      orderedModules.push(mod)
-  }
+  // Perform a topological sort based on dependencies
+  const sortedModules = topologicalSort(moduleMap)
 
-  return orderedModules
+  // Filter out modules without content (if any)
+  return sortedModules.filter(mod => mod.content)
 }
 
 async function findRequires(data: string, cwd: string): Promise<Module[]> {

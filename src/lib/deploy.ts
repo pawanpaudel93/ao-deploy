@@ -124,7 +124,7 @@ async function getAos() {
   }
 }
 
-async function findProcess(name: string, aosModule: string, owner: string) {
+async function findProcess(name: string, owner: string) {
   const tx = await ardb
     .appName('aos')
     .search('transactions')
@@ -133,14 +133,6 @@ async function findProcess(name: string, aosModule: string, owner: string) {
     .tags([
       { name: 'Data-Protocol', values: ['ao'] },
       { name: 'Type', values: ['Process'] },
-      {
-        name: 'Module',
-        values: [
-          aosModule,
-          '1SafZGlZT4TLI8xoc0QEQ4MylHhuyQUblxD8xLKvEKI',
-          '9afQ1PLf2mrshqCTZEzzJTR2gWaC9zNPnYgYEqg1Pt4',
-        ],
-      },
       { name: 'Name', values: [name] },
     ])
     .findOne()
@@ -161,7 +153,7 @@ export async function deployContract({ name, wallet, contractPath, tags, cron, m
   const owner = await getWalletAddress(walletJWK)
   const signer = createDataItemSigner(walletJWK)
 
-  let processId = await findProcess(name, module, owner)
+  let processId = await findProcess(name, owner)
 
   if (!processId) {
     tags = Array.isArray(tags) ? tags : []

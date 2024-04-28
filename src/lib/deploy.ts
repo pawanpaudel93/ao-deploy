@@ -4,123 +4,30 @@ import {
   result,
   spawn,
 } from '@permaweb/aoconnect'
-import Ardb from 'ardb'
-import type { JWKInterface } from 'arweave/node/lib/wallet'
-import { arweave, getWallet, getWalletAddress, isArweaveAddress } from './wallet'
-import { loadContract } from './load'
+import pLimit from 'p-limit'
+import type { DeployConfig, DeployResult } from '../types'
+import { Wallet } from './wallet'
+import { LuaProjectLoader } from './loader'
+import { ardb, isArweaveAddress, retryWithDelay, sleep } from './utils'
 
-/**
- * Args for deployContract
- */
-export interface DeployArgs {
-  /**
-   * Process name to spawn
-   * @default "default"
-   */
-  name?: string
-  /**
-   * Path to contract main file
-   */
-  contractPath: string
-  /**
-   * The module source to use to spin up Process
-   * @default "Fetches from `https://raw.githubusercontent.com/permaweb/aos/main/package.json`"
-   */
-  module?: string
-  /**
-   * Scheduler to use for Process
-   * @default "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA"
-   */
-  scheduler?: string
-  /**
-   * Additional tags to use for spawning Process
-   */
-  tags?: Tag[]
-  /**
-   * Cron interval to use for Process i.e (1-minute, 5-minutes)
-   */
-  cron?: string
-  /**
-   * Wallet path or JWK itself
-   */
-  wallet?: JWKInterface | string
-
-  /**
-   * Retry options
-   */
-  retry?: {
-    /**
-     * Retry count
-     * @default 10
-     */
-    count?: number
-    /**
-     * Retry delay in milliseconds
-     * @default 3000
-     */
-    delay?: number
-  }
-}
-
-export interface Tag { name: string, value: string }
-
-const ardb = new ((Ardb as any)?.default ?? Ardb)(arweave)
-
-/**
- * Retries a given function up to a maximum number of attempts.
- * @param fn - The asynchronous function to retry, which should return a Promise.
- * @param maxAttempts - The maximum number of attempts to make.
- * @param delay - The delay between attempts in milliseconds.
- * @return A Promise that resolves with the result of the function or rejects after all attempts fail.
- */
-async function retryWithDelay<T>(
-  fn: () => Promise<T>,
-  maxAttempts: number,
-  delay: number = 1000,
-): Promise<T> {
-  let attempts = 0
-
-  const attempt = async (): Promise<T> => {
-    try {
-      return await fn()
-    }
-    catch (error) {
-      attempts += 1
-      if (attempts < maxAttempts) {
-        console.log(`Attempt ${attempts} failed, retrying...`)
-        return new Promise<T>(resolve => setTimeout(() => resolve(attempt()), delay))
-      }
-      else {
-        throw error
-      }
-    }
+async function getAosDetails() {
+  const defaultDetails = {
+    version: '1.10.22',
+    module: 'SBNb1qPQ1TDwpD_mboxm2YllmMLXpWw4U8P9Ff8W9vk',
+    scheduler: '_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA',
   }
 
-  return attempt()
-}
-
-async function sleep(delay: number = 3000) {
-  return new Promise((resolve, _) => setTimeout(resolve, delay))
-}
-
-async function getAos() {
-  const defaultVersion = '1.10.22'
-  const defaultModule = 'SBNb1qPQ1TDwpD_mboxm2YllmMLXpWw4U8P9Ff8W9vk'
-  const defaultScheduler = '_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA'
   try {
-    const pkg = await (
-      await fetch(
-        'https://raw.githubusercontent.com/permaweb/aos/main/package.json',
-      )
-    ).json() as { version: string, aos: { module: string } }
+    const response = await fetch('https://raw.githubusercontent.com/permaweb/aos/main/package.json')
+    const pkg = await response.json() as { version: string, aos: { module: string } }
     return {
-      aosVersion: pkg?.version ?? defaultVersion,
-      aosModule: pkg?.aos?.module ?? defaultModule,
-      aosScheduler: defaultScheduler,
+      version: pkg?.version || defaultDetails.version,
+      module: pkg?.aos?.module || defaultDetails.module,
+      scheduler: defaultDetails.scheduler,
     }
   }
   catch {
-    return { aosVersion: defaultVersion, aosModule: defaultModule, aosScheduler: defaultScheduler }
+    return defaultDetails
   }
 }
 
@@ -140,44 +47,52 @@ async function findProcess(name: string, owner: string) {
   return tx?.id
 }
 
-export async function deployContract({ name, wallet, contractPath, tags, cron, module, scheduler, retry }: DeployArgs) {
-  // Create a new process
+function validateCron(cron: string) {
+  const cronRegex = /^\d+\-(second|seconds|minute|minutes|hour|hours|day|days|month|months|year|years|block|blocks|Second|Seconds|Minute|Minutes|Hour|Hours|Day|Days|Month|Months|Year|Years|Block|Blocks)$/
+  if (!cronRegex.test(cron))
+    throw new Error('Invalid cron flag!')
+}
+
+export async function deployContract({ name, wallet, contractPath, tags, cron, module, scheduler, retry, luaPath, configName }: DeployConfig): Promise<DeployResult> {
   name = name || 'default'
-  retry = retry ?? { count: 10, delay: 3000 }
+  configName = configName || name
+  retry = {
+    count: typeof retry?.count === 'number' && retry.count >= 0 ? retry.count : 10,
+    delay: typeof retry?.delay === 'number' && retry.delay >= 0 ? retry.delay : 3000,
+  }
 
-  const { aosVersion, aosModule, aosScheduler } = await getAos()
-  module = isArweaveAddress(module) ? module! : aosModule
-  scheduler = isArweaveAddress(scheduler) ? scheduler! : aosScheduler
+  const aosDetails = await getAosDetails()
+  module = isArweaveAddress(module) ? module! : aosDetails.module
+  scheduler = isArweaveAddress(scheduler) ? scheduler! : aosDetails.scheduler
 
-  const walletJWK = await getWallet(wallet)
-  const owner = await getWalletAddress(walletJWK)
-  const signer = createDataItemSigner(walletJWK)
+  const walletInstance = await Wallet.load(wallet)
+  const owner = await walletInstance.getAddress()
+  const signer = createDataItemSigner(walletInstance.jwk)
 
   let processId = await findProcess(name, owner)
+  const isNewProcess = !processId
 
   if (!processId) {
     tags = Array.isArray(tags) ? tags : []
     tags = [
       { name: 'App-Name', value: 'aos' },
       { name: 'Name', value: name },
-      { name: 'aos-Version', value: aosVersion },
+      { name: 'aos-Version', value: aosDetails.version },
       ...tags,
     ]
+
     if (cron) {
-      if (/^\d+\-(second|seconds|minute|minutes|hour|hours|day|days|month|months|year|years|block|blocks|Second|Seconds|Minute|Minutes|Hour|Hours|Day|Days|Month|Months|Year|Years|Block|Blocks)$/.test(cron)) {
-        tags = [...tags, { name: 'Cron-Interval', value: cron }, { name: 'Cron-Tag-Action', value: 'Cron' },
-        ]
-      }
-      else {
-        throw new Error('Invalid cron flag!')
-      }
+      validateCron(cron)
+      tags = [...tags, { name: 'Cron-Interval', value: cron }, { name: 'Cron-Tag-Action', value: 'Cron' }]
     }
+
     const data = '1984'
     processId = await spawn({ module, signer, tags, data, scheduler })
     await sleep(5000)
   }
 
-  const contractSrc = await loadContract(contractPath)
+  const loader = new LuaProjectLoader(configName, luaPath)
+  const contractSrc = await loader.loadContract(contractPath)
 
   // Load contract to process
   const messageId = await retryWithDelay(
@@ -188,16 +103,30 @@ export async function deployContract({ name, wallet, contractPath, tags, cron, m
         data: contractSrc,
         signer,
       }),
-    retry?.count ?? 10,
-    retry?.delay ?? 3000,
+    retry.count,
+    retry.delay,
   )
 
-  const { Output, Error: error } = await result({ process: processId, message: messageId })
-  if (Output?.data?.output)
-    throw new Error(Output?.data?.output)
+  const { Output, Error: error } = await retryWithDelay(
+    async () => result({
+      process: processId,
+      message: messageId,
+    }),
+    retry.count,
+    retry.delay,
+  )
 
-  if (error)
-    throw new Error(error)
+  const errorMessage = Output?.data?.output || error
 
-  return { processId, messageId }
+  if (errorMessage)
+    throw new Error(errorMessage)
+
+  return { name, processId, messageId, isNewProcess, configName }
+}
+
+export async function deployContracts(deployConfigs: DeployConfig[], concurrency: number = 5) {
+  const limit = pLimit(concurrency)
+  const promises = deployConfigs.map(config => limit(() => deployContract(config)))
+  const results = await Promise.allSettled(promises)
+  return results
 }

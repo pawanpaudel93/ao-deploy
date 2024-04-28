@@ -108,7 +108,7 @@ async function main() {
     console.log(`\nDeployed Process: ${processUrl} \nDeployment Message: ${messageUrl}`)
   }
   catch (error: any) {
-    console.log('\nDeployment failed!\n')
+    console.log('Deployment failed!')
     console.log(error?.message ?? 'Failed to deploy contract!')
   }
 }

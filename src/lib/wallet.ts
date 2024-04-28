@@ -1,52 +1,66 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
-import Arweave from 'arweave'
 import type { JWKInterface } from 'arweave/node/lib/wallet'
+import { arweave } from './utils'
 
-export const arweave = Arweave.init({
-  host: 'arweave.net',
-  port: 443,
-  protocol: 'https',
-})
+export class Wallet {
+  #jwk: JWKInterface
 
-/**
- * Check if the passed argument is a valid JSON Web Key (JWK) for Arweave.
- * @param obj - The object to check for JWK validity.
- * @returns {boolean} True if it's a valid Arweave JWK, otherwise false.
- */
-function isJwk(obj: any): boolean {
-  if (typeof obj !== 'object')
-    return false
-  const requiredKeys = ['n', 'e', 'd', 'p', 'q', 'dp', 'dq', 'qi']
-  return requiredKeys.every(key => key in obj)
-}
-
-export async function getWallet(walletOrPath?: fs.PathOrFileDescriptor | JWKInterface): Promise<JWKInterface> {
-  try {
-    if (!walletOrPath)
-      throw new Error('Wallet not specified')
-
-    if (isJwk(walletOrPath))
-      return walletOrPath as JWKInterface
-
-    const jwk = fs.readFileSync(walletOrPath as string, 'utf8')
-    return JSON.parse(jwk)
+  constructor(jwk: JWKInterface) {
+    this.#jwk = jwk
   }
-  catch (e) {
-    if (fs.existsSync(path.resolve(`${os.homedir()}/.aos.json`)))
-      return JSON.parse(fs.readFileSync(path.resolve(`${os.homedir()}/.aos.json`), 'utf-8'))
 
-    const wallet = await Arweave.init({}).wallets.generate()
-    fs.writeFileSync(path.resolve(`${os.homedir()}/.aos.json`), JSON.stringify(wallet))
-    return wallet
+  /**
+   * Check if the passed argument is a valid JSON Web Key (JWK) for Arweave.
+   * @param obj - The object to check for JWK validity.
+   * @returns {boolean} True if it's a valid Arweave JWK, otherwise false.
+   */
+  static isJwk(obj: any): boolean {
+    if (typeof obj !== 'object')
+      return false
+    const requiredKeys = ['n', 'e', 'd', 'p', 'q', 'dp', 'dq', 'qi']
+    return requiredKeys.every(key => key in obj)
   }
-}
 
-export async function getWalletAddress(wallet: JWKInterface) {
-  return await arweave.wallets.getAddress(wallet)
-}
+  #checkIfWalletLoaded() {
+    if (!this.#jwk)
+      throw new Error('Wallet not loaded yet')
+  }
 
-export function isArweaveAddress(address: any): boolean {
-  return typeof address === 'string' && /^[a-z0-9-_]{43}$/i.test(address)
+  static async getWallet(jwkOrPath?: fs.PathOrFileDescriptor | JWKInterface): Promise<JWKInterface> {
+    try {
+      if (!jwkOrPath)
+        throw new Error('Wallet not specified')
+
+      if (this.isJwk(jwkOrPath))
+        return jwkOrPath as JWKInterface
+
+      const jwk = fs.readFileSync(jwkOrPath as string, 'utf8')
+      return JSON.parse(jwk)
+    }
+    catch (e) {
+      if (fs.existsSync(path.resolve(`${os.homedir()}/.aos.json`)))
+        return JSON.parse(fs.readFileSync(path.resolve(`${os.homedir()}/.aos.json`), 'utf-8'))
+
+      const wallet = await arweave.wallets.generate()
+      fs.writeFileSync(path.resolve(`${os.homedir()}/.aos.json`), JSON.stringify(wallet))
+      return wallet
+    }
+  }
+
+  static async load(jwkOrPath?: fs.PathOrFileDescriptor | JWKInterface) {
+    const jwk = await this.getWallet(jwkOrPath)
+    return new Wallet(jwk)
+  }
+
+  async getAddress() {
+    this.#checkIfWalletLoaded()
+    return await arweave.wallets.getAddress(this.#jwk)
+  }
+
+  get jwk() {
+    this.#checkIfWalletLoaded()
+    return this.#jwk
+  }
 }

@@ -8,6 +8,7 @@ export default defineBuildConfig([{
   clean: true,
   rollup: {
     emitCJS: true,
+    inlineDependencies: true,
   },
   failOnWarn: false,
 }, {
@@ -18,6 +19,7 @@ export default defineBuildConfig([{
   clean: true,
   rollup: {
     emitCJS: false,
+    inlineDependencies: true,
   },
   failOnWarn: false,
 }])

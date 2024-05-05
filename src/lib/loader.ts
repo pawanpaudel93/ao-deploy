@@ -41,24 +41,26 @@ export class LuaProjectLoader {
   async #getModulePath(module: string, cwd: string) {
     try {
       const modPath = path.join(cwd, `${module.replace(/\./g, '/')}.lua`)
-      if (await this.#fileExists(modPath))
+      if (await this.#fileExists(modPath)) {
         return modPath
+      }
 
-      const luaCode = `print(package.searchpath("${module}", package.path .. ";" .. "${this.#luaPath}"))`
+      const luaCode = `print(package.searchpath('${module}', package.path .. ';' .. '${this.#luaPath}'))`
       const command = `lua -e "${luaCode}"`
 
       const { stdout, stderr } = await execAsync(command)
 
-      if (stderr)
+      if (stderr) {
         return
+      }
 
       if (stdout) {
         const potentialPath = stdout.trim()
-        if (await this.#fileExists(potentialPath))
+        if (await this.#fileExists(potentialPath)) {
           return potentialPath
+        }
       }
     }
-
     catch (error) { }
   }
 
@@ -86,12 +88,14 @@ export class LuaProjectLoader {
     const result: Module[] = []
 
     function visit(modName: string) {
-      if (visited.has(modName))
+      if (visited.has(modName)) {
         return
+      }
 
       const mod = moduleMap.get(modName)
-      if (!mod)
+      if (!mod) {
         throw new Error(`Module ${modName} is not found in the module map.`)
+      }
 
       visited.add(modName)
       mod.dependencies?.forEach(depName => visit(depName))
@@ -117,8 +121,9 @@ export class LuaProjectLoader {
         const requiresInMod = await this.#findRequires(mod.content!, cwd)
 
         for (const requirement of requiresInMod) {
-          if (!moduleMap.has(requirement.name))
+          if (!moduleMap.has(requirement.name)) {
             moduleMap.set(requirement.name, requirement)
+          }
           mod.dependencies = (mod.dependencies || new Set()).add(requirement.name)
         }
       }
@@ -136,13 +141,7 @@ export class LuaProjectLoader {
     const requiredModules = (data.match(requirePattern) || []).map(async (mod) => {
       const modPath = await this.#getModulePath(mod, cwd)
 
-      return modPath
-        ? {
-            name: mod,
-            path: modPath,
-            content: undefined,
-          }
-        : null
+      return modPath ? { name: mod, path: modPath, content: undefined } : null
     })
 
     return (await Promise.all(requiredModules)).filter(m => !!m) as Module[]
@@ -151,20 +150,23 @@ export class LuaProjectLoader {
   async loadContract(contractPath: string) {
     if (/\.lua$/.test(contractPath)) {
       let filePath = contractPath
-      if (!path.isAbsolute(filePath))
+      if (!path.isAbsolute(filePath)) {
         filePath = path.resolve(path.join(process.cwd(), contractPath))
+      }
 
-      if (!(await this.#fileExists(filePath)))
+      if (!(await this.#fileExists(filePath))) {
         throw new Error(chalk.red(`${filePath} file not found.`))
+      }
 
-      this.#logger.log(chalk.green(`Deploying: ${contractPath}`), false, true)
+      this.#logger.success(`Deploying: ${contractPath}`, false, true)
       let line = await fs.readFile(filePath, 'utf-8')
 
       this.#logger.log(chalk.gray(`Parsing contract structure...`), false, true)
 
       const projectStructure = await this.#createProjectStructure(line, path.dirname(filePath))
-      if (projectStructure.length > 0)
+      if (projectStructure.length > 0) {
         line = `${this.#createExecutableFromProject(projectStructure)}\n\n${line}`
+      }
 
       if (projectStructure.length > 0) {
         this.#logger.log(chalk.yellow(`The following files will be deployed:`), false, true)

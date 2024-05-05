@@ -66,6 +66,10 @@ export interface DeployConfig {
    * Concurrency limit to deploy multiple processes
    */
   concurrency?: number
+  /**
+   * Process Id of an existing process
+   */
+  processId?: string
 }
 
 export type Config = Record<ConfigName, DeployConfig>

@@ -9,8 +9,9 @@ export class Logger {
   }
 
   static #getInstance(name: string): Logger {
-    if (!Logger.#instances.has(name))
+    if (!Logger.#instances.has(name)) {
       Logger.#instances.set(name, new Logger(name))
+    }
     return Logger.#instances.get(name)!
   }
 
@@ -28,12 +29,20 @@ export class Logger {
     this.#logMessage(`${chalk.blue(`[${this.#name}]`)} ${message}`, prefixNewLine, suffixNewLine)
   }
 
+  success(message: string, prefixNewLine = false, suffixNewLine = false) {
+    this.#logMessage(`${chalk.blue(`[${this.#name}]`)} ${chalk.green(message)}`, prefixNewLine, suffixNewLine)
+  }
+
   error(message: string, prefixNewLine = false, suffixNewLine = false) {
     this.#logMessage(`${chalk.red(`[${this.#name}]`)} ${chalk.red(message)}`, prefixNewLine, suffixNewLine)
   }
 
   static log(name: string, message: string, prefixNewLine = false, suffixNewLine = false) {
     this.#getInstance(name).log(message, prefixNewLine, suffixNewLine)
+  }
+
+  static success(name: string, message: string, prefixNewLine = false, suffixNewLine = false) {
+    this.#getInstance(name).success(message, prefixNewLine, suffixNewLine)
   }
 
   static error(name: string, message: string, prefixNewLine = false, suffixNewLine = false) {

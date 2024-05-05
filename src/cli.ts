@@ -14,11 +14,13 @@ import { Logger } from './lib/logger'
 const PKG_ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '../')
 
 process.emitWarning = (warning, ...args) => {
-  if (args[0] === 'ExperimentalWarning')
+  if (args[0] === 'ExperimentalWarning') {
     return
+  }
 
-  if (args[0] && typeof args[0] === 'object' && args[0].type === 'ExperimentalWarning')
+  if (args[0] && typeof args[0] === 'object' && args[0].type === 'ExperimentalWarning') {
     return
+  }
 
   // @ts-expect-error "experimental warning"
   return emitWarning(warning, ...args)
@@ -32,21 +34,23 @@ function getPackageJson() {
 
 function parseToInt(value: string, defaultValue: number) {
   const parsedValue = Number.parseInt(value)
-  if (Number.isNaN(parsedValue))
+  if (Number.isNaN(parsedValue)) {
     return defaultValue
+  }
   return parsedValue
 }
 
 function logDeploymentDetails(result: DeployResult) {
   const { messageId, processId, isNewProcess, configName } = result
-  const processUrl = chalk.green(`https://ao_marton.g8way.io/#/process/${processId}`)
-  const messageUrl = chalk.green(`${processUrl}/${messageId}`)
+  const processUrl = `https://ao_marton.g8way.io/#/process/${processId}`
+  const messageUrl = `${processUrl}/${messageId}`
   const logger = Logger.init(configName)
 
   console.log('')
-  if (isNewProcess)
-    logger.log(`Deployed Process: ${processUrl}`)
-  logger.log(`Deployment Message: ${messageUrl}`)
+  if (isNewProcess) {
+    logger.success(`Deployed Process: ${processUrl}`)
+  }
+  logger.success(`Deployment Message: ${messageUrl}`)
 }
 
 const program = new Command()
@@ -64,6 +68,7 @@ program
   .option('-m, --module [module]', 'Module source for spawning the process.')
   .option('-c, --cron [interval]', 'Cron interval for the process (e.g. 1-minute, 5-minutes).')
   .option('-t, --tags [tags...]', 'Additional tags for spawning the process.')
+  .option('-p, --process-id [processId]', 'Process Id of existing process.')
   .option('--concurrency [limit]', 'Concurrency limit for deploying multiple processes.', '5')
   .option('--retry-count [count]', 'Number of retries for spawning the process.', '10')
   .option('--retry-delay [delay]', 'Delay between retries in milliseconds.', '3000')
@@ -101,6 +106,7 @@ const contractOrConfigPath = program.args[0]
             delay: parseToInt(options.retryDelay, 3000),
           },
           configName: options.name,
+          processId: options.processId,
         },
       )
       logDeploymentDetails(result)

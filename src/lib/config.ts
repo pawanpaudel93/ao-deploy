@@ -97,6 +97,12 @@ export class ConfigManager {
   }
 }
 
+/**
+ * Defines and validates a configuration object.
+ * @param config The configuration object to validate.
+ * @returns The validated configuration object.
+ * @throws Error if the configuration object is invalid.
+ */
 export function defineConfig(config: Config) {
   if (!ConfigManager.isValidConfig(config)) {
     throw new Error('Invalid config file loaded.')

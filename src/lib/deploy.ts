@@ -11,6 +11,9 @@ import { LuaProjectLoader } from './loader'
 import { ardb, isArweaveAddress, retryWithDelay, sleep } from './utils'
 import { Logger } from './logger'
 
+/**
+ * Manages deployments of contracts to AO.
+ */
 export class DeploymentsManager {
   #cachedAosDetails: { version: string, module: string, scheduler: string } | null = null
 
@@ -63,6 +66,11 @@ export class DeploymentsManager {
     }
   }
 
+  /**
+   * Deploys or updates a contract on AO.
+   * @param {DeployConfig} deployConfig - Configuration options for the deployment.
+   * @returns {Promise<DeployResult>} The result of the deployment.
+   */
   async deployContract({ name, wallet, contractPath, tags, cron, module, scheduler, retry, luaPath, configName, processId }: DeployConfig): Promise<DeployResult> {
     name = name || 'default'
     configName = configName || name
@@ -147,7 +155,13 @@ export class DeploymentsManager {
     return { name, processId, messageId, isNewProcess, configName }
   }
 
-  async deployContracts(deployConfigs: DeployConfig[], concurrency: number = 5) {
+  /**
+   * Deploys multiple contracts concurrently with specified concurrency limits.
+   * @param {DeployConfig[]} deployConfigs - Array of deployment configurations.
+   * @param {number} concurrency - Maximum number of deployments to run concurrently. Default is 5.
+   * @returns {Promise<PromiseSettledResult<DeployResult>[]>} Array of results for each deployment, either fulfilled or rejected.
+   */
+  async deployContracts(deployConfigs: DeployConfig[], concurrency: number = 5): Promise<PromiseSettledResult<DeployResult>[]> {
     const limit = pLimit(concurrency)
     const promises = deployConfigs.map(config => limit(() => deployContract(config)))
     const results = await Promise.allSettled(promises)
@@ -155,12 +169,23 @@ export class DeploymentsManager {
   }
 }
 
+/**
+ * Deploys or updates a contract on AO.
+ * @param {DeployConfig} deployConfig - Configuration options for the deployment.
+ * @returns {Promise<DeployResult>} The result of the deployment.
+ */
 export async function deployContract(deployConfig: DeployConfig): Promise<DeployResult> {
   const manager = new DeploymentsManager()
   return manager.deployContract(deployConfig)
 }
 
-export async function deployContracts(deployConfigs: DeployConfig[], concurrency: number = 5) {
+/**
+ * Deploys multiple contracts concurrently with specified concurrency limits.
+ * @param {DeployConfig[]} deployConfigs - Array of deployment configurations.
+ * @param {number} concurrency - Maximum number of deployments to run concurrently. Default is 5.
+ * @returns {Promise<PromiseSettledResult<DeployResult>[]>} Array of results for each deployment, either fulfilled or rejected.
+ */
+export async function deployContracts(deployConfigs: DeployConfig[], concurrency: number = 5): Promise<PromiseSettledResult<DeployResult>[]> {
   const manager = new DeploymentsManager()
   return manager.deployContracts(deployConfigs, concurrency)
 }

@@ -4,200 +4,188 @@ import {
   result,
   spawn,
 } from '@permaweb/aoconnect'
-import Ardb from 'ardb'
-import type { JWKInterface } from 'arweave/node/lib/wallet'
-import { arweave, getWallet, getWalletAddress, isArweaveAddress } from './wallet'
-import { loadContract } from './load'
+import pLimit from 'p-limit'
+import type { DeployConfig, DeployResult } from '../types'
+import { Wallet } from './wallet'
+import { LuaProjectLoader } from './loader'
+import { ardb, isArweaveAddress, retryWithDelay, sleep } from './utils'
+import { Logger } from './logger'
 
 /**
- * Args for deployContract
+ * Manages deployments of contracts to AO.
  */
-export interface DeployArgs {
-  /**
-   * Process name to spawn
-   * @default "default"
-   */
-  name?: string
-  /**
-   * Path to contract main file
-   */
-  contractPath: string
-  /**
-   * The module source to use to spin up Process
-   * @default "Fetches from `https://raw.githubusercontent.com/permaweb/aos/main/package.json`"
-   */
-  module?: string
-  /**
-   * Scheduler to use for Process
-   * @default "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA"
-   */
-  scheduler?: string
-  /**
-   * Additional tags to use for spawning Process
-   */
-  tags?: Tag[]
-  /**
-   * Cron interval to use for Process i.e (1-minute, 5-minutes)
-   */
-  cron?: string
-  /**
-   * Wallet path or JWK itself
-   */
-  wallet?: JWKInterface | string
+export class DeploymentsManager {
+  #cachedAosDetails: { version: string, module: string, scheduler: string } | null = null
 
-  /**
-   * Retry options
-   */
-  retry?: {
-    /**
-     * Retry count
-     * @default 10
-     */
-    count?: number
-    /**
-     * Retry delay in milliseconds
-     * @default 3000
-     */
-    delay?: number
-  }
-}
+  async #getAosDetails() {
+    if (this.#cachedAosDetails) {
+      return this.#cachedAosDetails
+    }
 
-export interface Tag { name: string, value: string }
+    const defaultDetails = {
+      version: '1.10.22',
+      module: 'SBNb1qPQ1TDwpD_mboxm2YllmMLXpWw4U8P9Ff8W9vk',
+      scheduler: '_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA',
+    }
 
-const ardb = new ((Ardb as any)?.default ?? Ardb)(arweave)
-
-/**
- * Retries a given function up to a maximum number of attempts.
- * @param fn - The asynchronous function to retry, which should return a Promise.
- * @param maxAttempts - The maximum number of attempts to make.
- * @param delay - The delay between attempts in milliseconds.
- * @return A Promise that resolves with the result of the function or rejects after all attempts fail.
- */
-async function retryWithDelay<T>(
-  fn: () => Promise<T>,
-  maxAttempts: number,
-  delay: number = 1000,
-): Promise<T> {
-  let attempts = 0
-
-  const attempt = async (): Promise<T> => {
     try {
-      return await fn()
+      const response = await fetch('https://raw.githubusercontent.com/permaweb/aos/main/package.json')
+      const pkg = await response.json() as { version: string, aos: { module: string } }
+      this.#cachedAosDetails = {
+        version: pkg?.version || defaultDetails.version,
+        module: pkg?.aos?.module || defaultDetails.module,
+        scheduler: defaultDetails.scheduler,
+      }
+      return this.#cachedAosDetails
     }
-    catch (error) {
-      attempts += 1
-      if (attempts < maxAttempts) {
-        console.log(`Attempt ${attempts} failed, retrying...`)
-        return new Promise<T>(resolve => setTimeout(() => resolve(attempt()), delay))
-      }
-      else {
-        throw error
-      }
+    catch {
+      return defaultDetails
     }
   }
 
-  return attempt()
-}
+  async #findProcess(name: string, owner: string) {
+    const tx = await ardb
+      .appName('aos')
+      .search('transactions')
+      .from(owner)
+      .only('id')
+      .tags([
+        { name: 'Data-Protocol', values: ['ao'] },
+        { name: 'Type', values: ['Process'] },
+        { name: 'Name', values: [name] },
+      ])
+      .findOne()
 
-async function sleep(delay: number = 3000) {
-  return new Promise((resolve, _) => setTimeout(resolve, delay))
-}
+    return tx?.id
+  }
 
-async function getAos() {
-  const defaultVersion = '1.10.22'
-  const defaultModule = 'SBNb1qPQ1TDwpD_mboxm2YllmMLXpWw4U8P9Ff8W9vk'
-  const defaultScheduler = '_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA'
-  try {
-    const pkg = await (
-      await fetch(
-        'https://raw.githubusercontent.com/permaweb/aos/main/package.json',
+  #validateCron(cron: string) {
+    const cronRegex = /^\d+\-(Second|second|Minute|Minute|Hour|hour|Day|day|Month|month|Year|year|Block|block)s?$/
+    if (!cronRegex.test(cron)) {
+      throw new Error('Invalid cron flag!')
+    }
+  }
+
+  /**
+   * Deploys or updates a contract on AO.
+   * @param {DeployConfig} deployConfig - Configuration options for the deployment.
+   * @returns {Promise<DeployResult>} The result of the deployment.
+   */
+  async deployContract({ name, wallet, contractPath, tags, cron, module, scheduler, retry, luaPath, configName, processId }: DeployConfig): Promise<DeployResult> {
+    name = name || 'default'
+    configName = configName || name
+    retry = {
+      count: typeof retry?.count === 'number' && retry.count >= 0 ? retry.count : 10,
+      delay: typeof retry?.delay === 'number' && retry.delay >= 0 ? retry.delay : 3000,
+    }
+
+    const logger = new Logger(configName)
+    const aosDetails = await this.#getAosDetails()
+    module = isArweaveAddress(module) ? module! : aosDetails.module
+    scheduler = isArweaveAddress(scheduler) ? scheduler! : aosDetails.scheduler
+
+    const walletInstance = await Wallet.load(wallet)
+    const owner = await walletInstance.getAddress()
+    const signer = createDataItemSigner(walletInstance.jwk)
+
+    if (!processId || (processId && !isArweaveAddress(processId))) {
+      processId = await this.#findProcess(name, owner)
+    }
+
+    const isNewProcess = !processId
+
+    if (!processId) {
+      logger.log('Spawning new process...', false, true)
+      tags = Array.isArray(tags) ? tags : []
+      tags = [
+        { name: 'App-Name', value: 'aos' },
+        { name: 'Name', value: name },
+        { name: 'aos-Version', value: aosDetails.version },
+        ...tags,
+      ]
+
+      if (cron) {
+        this.#validateCron(cron)
+        tags = [...tags, { name: 'Cron-Interval', value: cron }, { name: 'Cron-Tag-Action', value: 'Cron' }]
+      }
+
+      const data = '1984'
+      processId = await retryWithDelay(
+        () => spawn({ module, signer, tags, data, scheduler }),
+        retry.count,
+        retry.delay,
       )
-    ).json() as { version: string, aos: { module: string } }
-    return {
-      aosVersion: pkg?.version ?? defaultVersion,
-      aosModule: pkg?.aos?.module ?? defaultModule,
-      aosScheduler: defaultScheduler,
+      await sleep(1000)
     }
-  }
-  catch {
-    return { aosVersion: defaultVersion, aosModule: defaultModule, aosScheduler: defaultScheduler }
-  }
-}
-
-async function findProcess(name: string, owner: string) {
-  const tx = await ardb
-    .appName('aos')
-    .search('transactions')
-    .from(owner)
-    .only('id')
-    .tags([
-      { name: 'Data-Protocol', values: ['ao'] },
-      { name: 'Type', values: ['Process'] },
-      { name: 'Name', values: [name] },
-    ])
-    .findOne()
-
-  return tx?.id
-}
-
-export async function deployContract({ name, wallet, contractPath, tags, cron, module, scheduler, retry }: DeployArgs) {
-  // Create a new process
-  name = name || 'default'
-  retry = retry ?? { count: 10, delay: 3000 }
-
-  const { aosVersion, aosModule, aosScheduler } = await getAos()
-  module = isArweaveAddress(module) ? module! : aosModule
-  scheduler = isArweaveAddress(scheduler) ? scheduler! : aosScheduler
-
-  const walletJWK = await getWallet(wallet)
-  const owner = await getWalletAddress(walletJWK)
-  const signer = createDataItemSigner(walletJWK)
-
-  let processId = await findProcess(name, owner)
-
-  if (!processId) {
-    tags = Array.isArray(tags) ? tags : []
-    tags = [
-      { name: 'App-Name', value: 'aos' },
-      { name: 'Name', value: name },
-      { name: 'aos-Version', value: aosVersion },
-      ...tags,
-    ]
-    if (cron) {
-      if (/^\d+\-(second|seconds|minute|minutes|hour|hours|day|days|month|months|year|years|block|blocks|Second|Seconds|Minute|Minutes|Hour|Hours|Day|Days|Month|Months|Year|Years|Block|Blocks)$/.test(cron)) {
-        tags = [...tags, { name: 'Cron-Interval', value: cron }, { name: 'Cron-Tag-Action', value: 'Cron' },
-        ]
-      }
-      else {
-        throw new Error('Invalid cron flag!')
-      }
+    else {
+      logger.log('Updating existing process...', false, true)
     }
-    const data = '1984'
-    processId = await spawn({ module, signer, tags, data, scheduler })
-    await sleep(5000)
-  }
 
-  const contractSrc = await loadContract(contractPath)
+    const loader = new LuaProjectLoader(configName, luaPath)
+    const contractSrc = await loader.loadContract(contractPath)
 
-  // Load contract to process
-  const messageId = await retryWithDelay(
-    async () =>
-      message({
+    // Load contract to process
+    const messageId = await retryWithDelay(
+      async () =>
+        message({
+          process: processId,
+          tags: [{ name: 'Action', value: 'Eval' }],
+          data: contractSrc,
+          signer,
+        }),
+      retry.count,
+      retry.delay,
+    )
+
+    const { Output, Error: error } = await retryWithDelay(
+      async () => result({
         process: processId,
-        tags: [{ name: 'Action', value: 'Eval' }],
-        data: contractSrc,
-        signer,
+        message: messageId,
       }),
-    retry?.count ?? 10,
-    retry?.delay ?? 3000,
-  )
+      retry.count,
+      retry.delay,
+    )
 
-  const { Output, Error: error } = await result({ process: processId, message: messageId })
-  if (Output?.data?.output)
-    throw new Error(Output?.data?.output)
+    const errorMessage = Output?.data?.output || error
 
-  if (error)
-    throw new Error(error)
+    if (errorMessage) {
+      throw new Error(errorMessage)
+    }
 
-  return { processId, messageId }
+    return { name, processId, messageId, isNewProcess, configName }
+  }
+
+  /**
+   * Deploys multiple contracts concurrently with specified concurrency limits.
+   * @param {DeployConfig[]} deployConfigs - Array of deployment configurations.
+   * @param {number} concurrency - Maximum number of deployments to run concurrently. Default is 5.
+   * @returns {Promise<PromiseSettledResult<DeployResult>[]>} Array of results for each deployment, either fulfilled or rejected.
+   */
+  async deployContracts(deployConfigs: DeployConfig[], concurrency: number = 5): Promise<PromiseSettledResult<DeployResult>[]> {
+    const limit = pLimit(concurrency)
+    const promises = deployConfigs.map(config => limit(() => deployContract(config)))
+    const results = await Promise.allSettled(promises)
+    return results
+  }
+}
+
+/**
+ * Deploys or updates a contract on AO.
+ * @param {DeployConfig} deployConfig - Configuration options for the deployment.
+ * @returns {Promise<DeployResult>} The result of the deployment.
+ */
+export async function deployContract(deployConfig: DeployConfig): Promise<DeployResult> {
+  const manager = new DeploymentsManager()
+  return manager.deployContract(deployConfig)
+}
+
+/**
+ * Deploys multiple contracts concurrently with specified concurrency limits.
+ * @param {DeployConfig[]} deployConfigs - Array of deployment configurations.
+ * @param {number} concurrency - Maximum number of deployments to run concurrently. Default is 5.
+ * @returns {Promise<PromiseSettledResult<DeployResult>[]>} Array of results for each deployment, either fulfilled or rejected.
+ */
+export async function deployContracts(deployConfigs: DeployConfig[], concurrency: number = 5): Promise<PromiseSettledResult<DeployResult>[]> {
+  const manager = new DeploymentsManager()
+  return manager.deployContracts(deployConfigs, concurrency)
 }

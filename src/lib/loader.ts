@@ -158,17 +158,15 @@ export class LuaProjectLoader {
         throw new Error(chalk.red(`${filePath} file not found.`))
       }
 
-      this.#logger.success(`Deploying: ${contractPath}`, false, true)
+      this.#logger.log(`Deploying: ${contractPath}`, false, true)
       let line = await fs.readFile(filePath, 'utf-8')
 
-      this.#logger.log(chalk.gray(`Parsing contract structure...`), false, true)
+      this.#logger.log(`Parsing contract structure...`, false, true)
 
       const projectStructure = await this.#createProjectStructure(line, path.dirname(filePath))
       if (projectStructure.length > 0) {
         line = `${this.#createExecutableFromProject(projectStructure)}\n\n${line}`
-      }
 
-      if (projectStructure.length > 0) {
         this.#logger.log(chalk.yellow(`The following files will be deployed:`), false, true)
         console.log(chalk.dim(createFileTree([...projectStructure.map(m => m.path), `${filePath} ${chalk.reset(chalk.bgGreen(' MAIN '))}`])))
         console.log('')

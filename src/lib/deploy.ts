@@ -95,7 +95,7 @@ export class DeploymentsManager {
     const isNewProcess = !processId
 
     if (!processId) {
-      logger.success('Spawning new process...', false, true)
+      logger.log('Spawning new process...', false, true)
       tags = Array.isArray(tags) ? tags : []
       tags = [
         { name: 'App-Name', value: 'aos' },
@@ -118,7 +118,7 @@ export class DeploymentsManager {
       await sleep(1000)
     }
     else {
-      logger.success('Updating existing process...', false, true)
+      logger.log('Updating existing process...', false, true)
     }
 
     const loader = new LuaProjectLoader(configName, luaPath)

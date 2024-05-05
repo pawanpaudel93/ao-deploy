@@ -42,15 +42,15 @@ function parseToInt(value: string, defaultValue: number) {
 
 function logDeploymentDetails(result: DeployResult) {
   const { messageId, processId, isNewProcess, configName } = result
-  const processUrl = `https://ao_marton.g8way.io/#/process/${processId}`
-  const messageUrl = `${processUrl}/${messageId}`
+  const processUrl = chalk.green(`https://ao_marton.g8way.io/#/process/${processId}`)
+  const messageUrl = chalk.green(`${processUrl}/${messageId}`)
   const logger = Logger.init(configName)
 
   console.log('')
   if (isNewProcess) {
-    logger.success(`Deployed Process: ${processUrl}`)
+    logger.log(`Deployed Process: ${processUrl}`)
   }
-  logger.success(`Deployment Message: ${messageUrl}`)
+  logger.log(`Deployment Message: ${messageUrl}`)
 }
 
 const program = new Command()
@@ -62,7 +62,7 @@ program
   .argument('<contractOrConfigPath>', 'Path to the main contract file or deployment configuration.')
   .option('-n, --name [name]', 'Specify the process name.', 'default')
   .option('-w, --wallet [wallet]', 'Path to the wallet JWK file.')
-  .option('-l, --lua-path', 'Specify the Lua modules path.')
+  .option('-l, --lua-path [luaPath]', 'Specify the Lua modules path seperated by semicolon.')
   .option('-d, --deploy [deploy]', 'List of deployment configuration names, separated by commas.')
   .option('-s, --scheduler [scheduler]', 'Scheduler to use for the process.', '_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA')
   .option('-m, --module [module]', 'Module source for spawning the process.')
@@ -70,7 +70,7 @@ program
   .option('-t, --tags [tags...]', 'Additional tags for spawning the process.')
   .option('-p, --process-id [processId]', 'Process Id of existing process.')
   .option('--concurrency [limit]', 'Concurrency limit for deploying multiple processes.', '5')
-  .option('--retry-count [count]', 'Number of retries for spawning the process.', '10')
+  .option('--retry-count [count]', 'Number of retries for deploying contract.', '10')
   .option('--retry-delay [delay]', 'Delay between retries in milliseconds.', '3000')
 
 program.parse(process.argv)
@@ -80,7 +80,7 @@ const contractOrConfigPath = program.args[0]
 
 ;(async () => {
   try {
-    Logger.log(packageJson.name, chalk.gray('Deploying...'), false, true)
+    Logger.log(packageJson.name, 'Deploying...', false, true)
     if (contractOrConfigPath.endsWith('.lua')) {
       const tags: Tag[] = Array.isArray(options.tags)
         ? options.tags.reduce<Tag[]>((accumulator, tag) => {
@@ -105,6 +105,7 @@ const contractOrConfigPath = program.args[0]
             count: parseToInt(options.retryCount, 10),
             delay: parseToInt(options.retryDelay, 3000),
           },
+          luaPath: options.luaPath,
           configName: options.name,
           processId: options.processId,
         },

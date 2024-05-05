@@ -6,7 +6,7 @@
 [![JSDocs][jsdocs-src]][jsdocs-href]
 [![License][license-src]][license-href]
 
-A package to deploy AO contracts.
+A package for deploying AO contracts.
 
 ## Installation
 
@@ -52,32 +52,26 @@ Options:
   -w, --wallet [wallet]         Path to the wallet JWK file.
   -l, --lua-path [luaPath]      Specify the Lua modules path seperated by semicolon.
   -d, --deploy [deploy]         List of deployment configuration names, separated by commas.
-  -s, --scheduler [scheduler]   Scheduler to use for the process. (default: "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA")
+  -s, --scheduler [scheduler]   Scheduler to be used for the process. (default: "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA")
   -m, --module [module]         Module source for spawning the process.
   -c, --cron [interval]         Cron interval for the process (e.g. 1-minute, 5-minutes).
   -t, --tags [tags...]          Additional tags for spawning the process.
-  -p, --process-id [processId]  Process Id of existing process.
+  -p, --process-id [processId]  Specify process Id of existing process.
   --concurrency [limit]         Concurrency limit for deploying multiple processes. (default: "5")
   --retry-count [count]         Number of retries for deploying contract. (default: "10")
   --retry-delay [delay]         Delay between retries in milliseconds. (default: "3000")
   -h, --help                    display help for command
 ```
 
-#### CLI Example
+#### CLI Examples
 
 ```sh
 ao-deploy process.lua -n tictactoe -w wallet.json --tags name1:value1 name2:value2
 ```
 
-OR,
+##### Deployment with configuration
 
-```sh
-aod process.lua -n tictactoe -w wallet.json --tags name1:value1 name2:value2
-```
-
-#### CLI Example with Deployment configuration
-
-Here is an example of a deployment configuration.
+Here is an example using a deployment configuration:
 
 ```ts
 // aod.config.ts
@@ -110,13 +104,13 @@ const config = defineConfig({
 export default config
 ```
 
-You can deploy all the contracts using the above config file with the following command:
+Deploy all specified contracts:
 
 ```sh
 ao-deploy aod.config.ts
 ```
 
-You can deploy particular contracts using the above config file with the following command:
+Deploy specific contracts:
 
 ```sh
 ao-deploy aod.config.ts --deploy=contract_1,contract_3
@@ -125,17 +119,17 @@ ao-deploy aod.config.ts --deploy=contract_1,contract_3
 > [!Note]
 A wallet is generated and saved if not passed.
 
-Run this command to get the generated wallet path:
+Retrieve the generated wallet path:
 
 ```sh
 node -e "const path = require('path'); const os = require('os'); console.log(path.resolve(os.homedir(), '.aos.json'));"
 ```
 
-### Code
+### API Usage
 
 To deploy a contract, you need to import and call the `deployContract` function from your script. Here is a basic example:
 
-#### Example: deployConfig
+#### Example: deployContract
 
 ```ts
 import { deployContract } from 'ao-deploy'
@@ -159,8 +153,7 @@ async function main() {
     console.log(`\nDeployed Process: ${processUrl} \nDeployment Message: ${messageUrl}`)
   }
   catch (error: any) {
-    console.log('Deployment failed!')
-    console.log(error?.message ?? 'Failed to deploy contract!')
+    console.log(`Deployment failed!: ${error?.message ?? 'Failed to deploy contract!'}\n`)
   }
 }
 
@@ -213,10 +206,10 @@ async function main() {
             delay: 3000,
           },
         }
-      ]
+      ],
+      2
     )
     results.forEach((result, idx) => {
-      const configName = deployConfigs[idx].configName!
       if (result.status === 'fulfilled') {
         const { processId, messageId } = result.value
         const processUrl = `https://ao_marton.g8way.io/#/process/${processId}`
@@ -224,13 +217,12 @@ async function main() {
         console.log(`\nDeployed Process: ${processUrl} \nDeployment Message: ${messageUrl}`)
       }
       else {
-        console.log(`Failed to deploy contract!: ${result.reason}`)
+        console.log(`Failed to deploy contract!: ${result.reason}\n`)
       }
     })
   }
   catch (error: any) {
-    console.log('Deployment failed!')
-    console.log(error?.message ?? 'Failed to deploy contract!')
+    console.log(`Deployment failed!: ${error?.message ?? 'Failed to deploy contract!'}\n`)
   }
 }
 

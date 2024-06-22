@@ -148,7 +148,7 @@ export class DeploymentsManager {
 
     let errorMessage = null
 
-    if (Output && Output.data && Output.data.output) {
+    if (Output?.data?.output) {
       errorMessage = Output.data.output
     }
     else if (error) {

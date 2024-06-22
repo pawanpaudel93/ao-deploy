@@ -146,7 +146,19 @@ export class DeploymentsManager {
       retry.delay,
     )
 
-    const errorMessage = Output?.data?.output || error
+    let errorMessage = null
+
+    if (Output && Output.data && Output.data.output) {
+      errorMessage = Output.data.output
+    }
+    else if (error) {
+      if (typeof error === 'object' && Object.keys(error).length > 0) {
+        errorMessage = JSON.stringify(error)
+      }
+      else {
+        errorMessage = String(error)
+      }
+    }
 
     if (errorMessage) {
       throw new Error(errorMessage)

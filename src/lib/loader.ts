@@ -14,8 +14,10 @@ import util from 'node:util'
 // @ts-expect-error types missing
 import createFileTree from 'pretty-file-tree'
 import chalk from 'chalk'
-import type { Module } from '../types'
+import pLimit from 'p-limit'
+import type { BundleResult, BundlingConfig, Module } from '../types'
 import { Logger } from './logger'
+import { writeFileToProjectDir } from './utils'
 
 const execAsync = util.promisify(exec)
 
@@ -158,7 +160,7 @@ export class LuaProjectLoader {
         throw new Error(chalk.red(`${filePath} file not found.`))
       }
 
-      this.#logger.log(`Deploying: ${contractPath}`, false, true)
+      this.#logger.log(`Loading: ${contractPath}`, false, true)
       let line = await fs.readFile(filePath, 'utf-8')
 
       this.#logger.log(`Parsing contract structure...`, false, true)
@@ -167,7 +169,7 @@ export class LuaProjectLoader {
       if (projectStructure.length > 0) {
         line = `${this.#createExecutableFromProject(projectStructure)}\n\n${line}`
 
-        this.#logger.log(chalk.yellow(`The following files will be deployed:`), false, true)
+        this.#logger.log(chalk.yellow(`The following files will be loaded:`), false, true)
         console.log(chalk.dim(createFileTree([...projectStructure.map(m => m.path), `${filePath} ${chalk.reset(chalk.bgGreen(' MAIN '))}`])))
         console.log('')
       }
@@ -178,4 +180,30 @@ export class LuaProjectLoader {
       throw new Error(chalk.red('It requires a *.lua file'))
     }
   }
+
+  async loadAndBundleContract(config: BundlingConfig): Promise<BundleResult> {
+    try {
+      const contractSrc = await this.loadContract(config.contractPath)
+      await writeFileToProjectDir(contractSrc, config.outDir, config.name)
+
+      return {
+        configName: config.name,
+        outDir: config.outDir,
+        size: new TextEncoder().encode(contractSrc).length,
+        name: config.name,
+      }
+    }
+    catch (error) {
+      throw new Error(chalk.red(`Failed to load and bundle contract at: ${config.contractPath}`))
+    }
+  }
+}
+
+export async function loadAndBundleContracts(configs: BundlingConfig[], concurrency: number = 5): Promise<PromiseSettledResult<BundleResult>[]> {
+  const loader = new LuaProjectLoader('bundle')
+
+  const limit = pLimit(concurrency)
+  const promises = configs.map(config => limit(() => loader.loadAndBundleContract(config)))
+
+  return await Promise.allSettled(promises)
 }

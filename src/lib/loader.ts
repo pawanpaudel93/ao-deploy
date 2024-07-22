@@ -200,10 +200,12 @@ export class LuaProjectLoader {
 }
 
 export async function loadAndBundleContracts(configs: BundlingConfig[], concurrency: number = 5): Promise<PromiseSettledResult<BundleResult>[]> {
-  const loader = new LuaProjectLoader('bundle')
-
   const limit = pLimit(concurrency)
-  const promises = configs.map(config => limit(() => loader.loadAndBundleContract(config)))
+  const promises = configs.map(config => limit(() => {
+    const loader = new LuaProjectLoader(config.name)
+
+    return loader.loadAndBundleContract(config)
+  }))
 
   return await Promise.allSettled(promises)
 }

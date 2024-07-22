@@ -186,7 +186,7 @@ async function buildHandler() {
       const bundlingConfigs = deployConfigs.map(config => ({
         name: config.name || 'bundle',
         contractPath: config.contractPath,
-        outDir: config.outDir || './dist',
+        outDir: config.outDir || './process-dist',
       }))
       const results = await loadAndBundleContracts(bundlingConfigs, concurrency)
 
@@ -204,7 +204,7 @@ async function buildHandler() {
 
       const totalCount = bundlingConfigs.length
       const successCount = results.length
-      Logger.log(packageJson.name, `Bundling Status: ${chalk.green(`${successCount}/${totalCount}`)} successful deployments.`, true)
+      Logger.log(packageJson.name, `Successful builds: ${chalk.green(`${successCount}/${totalCount}`)} successful deployments.`, true)
     }
   }
   catch (error: any) {

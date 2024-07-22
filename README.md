@@ -231,7 +231,7 @@ async function main() {
 main()
 ```
 
-#### Example: Build Contracts
+#### Example: Build Contract using CLI
 
 To Build contracts and produce single bundle lua file, take a look at below provided commands
 
@@ -246,6 +246,58 @@ Build contract and save to specific directory:
 ```sh
 aod src/process.lua -n my-process --only-build --build-output <PATH>
 aod src/process.lua -n my-process --only-build --build-output ./dist
+```
+
+#### Example: Build Contracts using Config
+
+To Build contracts using config, take a look at below provided example
+
+Here is an example using a deployment configuration:
+
+```ts
+// aod.config.ts
+import { defineConfig } from 'ao-deploy'
+
+const wallet = 'wallet.json'
+const luaPath = './?.lua;./src/?.lua'
+
+const config = defineConfig({
+  contract_1: {
+    luaPath,
+    name: `contract-1`,
+    contractPath: 'contract-1.lua',
+    wallet,
+    outDir: './dist',
+  },
+  contract_2: {
+    luaPath,
+    name: `contract-2`,
+    contractPath: 'contract-2.lua',
+    wallet,
+    outDir: './dist',
+  },
+  contract_3: {
+    luaPath,
+    name: `contract-3`,
+    contractPath: 'contract-3.lua',
+    wallet,
+    outDir: './dist',
+  }
+})
+
+export default config
+```
+
+Build all specified contracts:
+
+```sh
+ao-deploy aod.config.ts --only-build
+```
+
+build specific contracts:
+
+```sh
+ao-deploy aod.config.ts --deploy=contract_1,contract_3 --only-build
 ```
 
 ## Author

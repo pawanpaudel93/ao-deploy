@@ -59,13 +59,13 @@ function logDeploymentDetails(result: DeployResult) {
 function logBundleDetails(result: BundleResult) {
   const { name, outDir, size, configName } = result
   const generated = chalk.green(`${name}.lua has been generated at ${outDir}`)
-  const bundleSize = chalk.green(`Bundle size is bytes: ${size}`)
+  const bundleSize = chalk.green(`Bundle size: ${size} bytes`)
   const logger = Logger.init(configName)
 
   console.log('')
 
-  logger.log(`Bundling Service: ${generated}`)
-  logger.log(`Bundling Service: ${bundleSize}`)
+  logger.log(`Bundling: ${generated}`)
+  logger.log(`Bundling: ${bundleSize}`)
 
   logger.log(`Bundling complete! ✨`)
 }
@@ -81,6 +81,7 @@ program
   .option('-w, --wallet [wallet]', 'Path to the wallet JWK file.')
   .option('-l, --lua-path [luaPath]', 'Specify the Lua modules path seperated by semicolon.')
   .option('-d, --deploy [deploy]', 'List of deployment configuration names, separated by commas.')
+  .option('-b, --build [build]', 'List of build configuration names, separated by commas.')
   .option('-s, --scheduler [scheduler]', 'Scheduler to be used for the process.', '_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA')
   .option('-m, --module [module]', 'Module source for spawning the process.')
   .option('-c, --cron [interval]', 'Cron interval for the process (e.g. 1-minute, 5-minutes).')
@@ -180,7 +181,7 @@ async function buildHandler() {
     }
     else {
       const configManager = new ConfigManager(contractOrConfigPath)
-      const deployConfigs = configManager.getDeployConfigs(options.deploy)
+      const deployConfigs = configManager.getDeployConfigs(options.build)
       const concurrency = parseToInt(options.concurrency, 5)
 
       const bundlingConfigs = deployConfigs.map(config => ({
@@ -204,7 +205,7 @@ async function buildHandler() {
 
       const totalCount = bundlingConfigs.length
       const successCount = results.length
-      Logger.log(packageJson.name, `Successful builds: ${chalk.green(`${successCount}/${totalCount}`)} successful deployments.`, true)
+      Logger.log(packageJson.name, `Build status: ${chalk.green(`${successCount}/${totalCount}`)} successful builds.`, true)
     }
   }
   catch (error: any) {

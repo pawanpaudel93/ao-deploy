@@ -57,6 +57,8 @@ Options:
   -c, --cron [interval]         Cron interval for the process (e.g. 1-minute, 5-minutes).
   -t, --tags [tags...]          Additional tags for spawning the process.
   -p, --process-id [processId]  Specify process Id of existing process.
+  --only-build                  Only bundle modular lua project into single file stored at process-dist.
+  --build-output [path]         Used with --only-build to save single bundle file at provided path.
   --concurrency [limit]         Concurrency limit for deploying multiple processes. (default: "5")
   --retry-count [count]         Number of retries for deploying contract. (default: "10")
   --retry-delay [delay]         Delay between retries in milliseconds. (default: "3000")
@@ -227,6 +229,75 @@ async function main() {
 }
 
 main()
+```
+
+#### Example: Build Contract using CLI
+
+To Build contracts and produce single bundle lua file, take a look at below provided commands
+
+Build contract and save to default(`process-dist`) directory:
+
+```sh
+aod src/process.lua -n my-process --only-build
+```
+
+Build contract and save to specific directory:
+
+```sh
+aod src/process.lua -n my-process --only-build --build-output <PATH>
+aod src/process.lua -n my-process --only-build --build-output ./dist
+```
+
+#### Example: Build Contracts using Config
+
+To Build contracts using config, take a look at below provided example
+
+Here is an example using a deployment configuration:
+
+```ts
+// aod.config.ts
+import { defineConfig } from 'ao-deploy'
+
+const wallet = 'wallet.json'
+const luaPath = './?.lua;./src/?.lua'
+
+const config = defineConfig({
+  contract_1: {
+    luaPath,
+    name: `contract-1`,
+    contractPath: 'contract-1.lua',
+    wallet,
+    outDir: './dist',
+  },
+  contract_2: {
+    luaPath,
+    name: `contract-2`,
+    contractPath: 'contract-2.lua',
+    wallet,
+    outDir: './dist',
+  },
+  contract_3: {
+    luaPath,
+    name: `contract-3`,
+    contractPath: 'contract-3.lua',
+    wallet,
+    outDir: './dist',
+  }
+})
+
+export default config
+```
+
+Build all specified contracts:
+
+```sh
+ao-deploy aod.config.ts --only-build
+```
+
+build specific contracts:
+
+```sh
+ao-deploy aod.config.ts --deploy=contract_1,contract_3 --only-build
 ```
 
 ## Author

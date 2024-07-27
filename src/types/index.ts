@@ -70,6 +70,10 @@ export interface DeployConfig {
    * Process Id of an existing process
    */
   processId?: string
+  /**
+   * Output directory of bundle
+   */
+  outDir?: string
 }
 
 export type Config = Record<ConfigName, DeployConfig>
@@ -80,6 +84,19 @@ export interface DeployResult {
   messageId: string
   processId: string
   isNewProcess: boolean
+}
+
+export interface BundleResult {
+  name: string
+  configName: string
+  outDir: string
+  size: number
+}
+
+export interface BundlingConfig {
+  name: string
+  contractPath: string
+  outDir: string
 }
 
 export interface Module { name: string, path: string, content?: string, dependencies?: Set<string> }

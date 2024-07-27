@@ -124,6 +124,7 @@ export class DeploymentsManager {
     const loader = new LuaProjectLoader(configName, luaPath)
     const contractSrc = await loader.loadContract(contractPath)
 
+    logger.log(`Deploying: ${contractPath}`, false, true)
     // Load contract to process
     const messageId = await retryWithDelay(
       async () =>

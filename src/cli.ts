@@ -59,7 +59,7 @@ function logDeploymentDetails(result: DeployResult) {
 function logBundleDetails(result: BundleResult) {
   const { name, outDir, size, configName } = result
   const generated = chalk.green(`${name}.lua has been generated at ${outDir}`)
-  const bundleSize = chalk.green(`Bundle size: ${size} bytes`)
+  const bundleSize = chalk.green(`Bundle size is ${size} bytes`)
   const logger = Logger.init(configName)
 
   console.log('')

@@ -67,7 +67,7 @@ Options:
 
 #### CLI Examples
 
-##### Example: Deploy contract without configuration
+##### Example: Deploy contract
 
 ```sh
 ao-deploy process.lua -n tictactoe -w wallet.json --tags name1:value1 name2:value2
@@ -120,7 +120,7 @@ Deploy specific contracts:
 ao-deploy aod.config.ts --deploy=contract_1,contract_3
 ```
 
-##### Example: Build Contract without using configuration
+##### Example: Build Contract
 
 To Build contracts and produce single bundle lua file, take a look at below provided commands
 

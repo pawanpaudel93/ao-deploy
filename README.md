@@ -65,15 +65,13 @@ Options:
   -h, --help                    display help for command
 ```
 
-#### CLI Examples
-
-##### Example: Deploy contract
+#### Example: Deploy contract
 
 ```sh
 ao-deploy process.lua -n tictactoe -w wallet.json --tags name1:value1 name2:value2
 ```
 
-##### Example: Deploy contracts with configuration
+#### Example: Deploy contracts with configuration
 
 Here is an example using a deployment configuration:
 
@@ -120,7 +118,7 @@ Deploy specific contracts:
 ao-deploy aod.config.ts --deploy=contract_1,contract_3
 ```
 
-##### Example: Build Contract
+#### Example: Build Contract
 
 To Build contracts and produce single bundle lua file, take a look at below provided commands
 
@@ -137,7 +135,7 @@ aod src/process.lua -n my-process --build-only --out-dir <PATH>
 aod src/process.lua -n my-process --build-only --out-dir ./dist
 ```
 
-##### Example: Build Contracts using Configuration
+#### Example: Build Contracts using Configuration
 
 To Build contracts using config, take a look at below provided example
 
@@ -147,7 +145,6 @@ Here is an example using a deployment configuration:
 // aod.config.ts
 import { defineConfig } from 'ao-deploy'
 
-const wallet = 'wallet.json'
 const luaPath = './?.lua;./src/?.lua'
 
 const config = defineConfig({
@@ -155,21 +152,18 @@ const config = defineConfig({
     luaPath,
     name: `contract-1`,
     contractPath: 'contract-1.lua',
-    wallet,
     outDir: './dist',
   },
   contract_2: {
     luaPath,
     name: `contract-2`,
     contractPath: 'contract-2.lua',
-    wallet,
     outDir: './dist',
   },
   contract_3: {
     luaPath,
     name: `contract-3`,
     contractPath: 'contract-3.lua',
-    wallet,
     outDir: './dist',
   }
 })

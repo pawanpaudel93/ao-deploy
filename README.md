@@ -7,6 +7,15 @@
 
 A package for deploying AO contracts.
 
+## Features
+
+- Build only or deploy AO contracts with ease.
+- Custom LUA_PATH support.
+- Support LuaRocks packages.
+- Support for deployment configuration.
+- Flexible concurrency and retry options for reliable deployments.
+- CLI and API interfaces for versatile usage.
+
 ## Installation
 
 ### Using npm

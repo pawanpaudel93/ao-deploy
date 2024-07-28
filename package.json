@@ -52,7 +52,7 @@
     "prepare": "simple-git-hooks"
   },
   "dependencies": {
-    "@permaweb/aoconnect": "^0.0.53",
+    "@permaweb/aoconnect": "^0.0.57",
     "ardb": "^1.1.10",
     "arweave": "^1.15.1",
     "chalk": "^5.3.0",

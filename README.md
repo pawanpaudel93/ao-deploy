@@ -57,8 +57,8 @@ Options:
   -c, --cron [interval]         Cron interval for the process (e.g. 1-minute, 5-minutes).
   -t, --tags [tags...]          Additional tags for spawning the process.
   -p, --process-id [processId]  Specify process Id of existing process.
-  --only-build                  Only bundle modular lua project into single file stored at process-dist.
-  --build-output [path]         Used with --only-build to save single bundle file at provided path.
+  --build-only                  Only bundle modular lua project into single file stored at process-dist.
+  --out-dir [path]              Used with --build-only to output the single bundle contract file to a specified directory.
   --concurrency [limit]         Concurrency limit for deploying multiple processes. (default: "5")
   --retry-count [count]         Number of retries for deploying contract. (default: "10")
   --retry-delay [delay]         Delay between retries in milliseconds. (default: "3000")
@@ -127,14 +127,14 @@ To Build contracts and produce single bundle lua file, take a look at below prov
 Build contract and save to default(`process-dist`) directory:
 
 ```sh
-aod src/process.lua -n my-process --only-build
+aod src/process.lua -n my-process --build-only
 ```
 
 Build contract and save to specific directory:
 
 ```sh
-aod src/process.lua -n my-process --only-build --build-output <PATH>
-aod src/process.lua -n my-process --only-build --build-output ./dist
+aod src/process.lua -n my-process --build-only --out-dir <PATH>
+aod src/process.lua -n my-process --build-only --out-dir ./dist
 ```
 
 ##### Example: Build Contracts using Configuration
@@ -180,13 +180,13 @@ export default config
 Build all specified contracts:
 
 ```sh
-ao-deploy aod.config.ts --only-build
+ao-deploy aod.config.ts --build-only
 ```
 
 Build specific contracts:
 
 ```sh
-ao-deploy aod.config.ts --build=contract_1,contract_3 --only-build
+ao-deploy aod.config.ts --build=contract_1,contract_3 --build-only
 ```
 
 > [!Note]

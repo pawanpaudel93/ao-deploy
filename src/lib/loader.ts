@@ -202,7 +202,7 @@ export class LuaProjectLoader {
 export async function loadAndBundleContracts(configs: BundlingConfig[], concurrency: number = 5): Promise<PromiseSettledResult<BundleResult>[]> {
   const limit = pLimit(concurrency)
   const promises = configs.map(config => limit(() => {
-    const loader = new LuaProjectLoader(config.name)
+    const loader = new LuaProjectLoader(config.name, config.luaPath)
 
     return loader.loadAndBundleContract(config)
   }))

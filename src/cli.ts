@@ -87,8 +87,8 @@ program
   .option('-c, --cron [interval]', 'Cron interval for the process (e.g. 1-minute, 5-minutes).')
   .option('-t, --tags [tags...]', 'Additional tags for spawning the process.')
   .option('-p, --process-id [processId]', 'Specify process Id of an existing process.')
-  .option('--only-build', 'Only bundles modular ao process code into single bundle file and saves at provided location.')
-  .option('--build-output [out path for bundle file]', 'Specify process Id of an existing process.')
+  .option('--build-only', 'Only bundles modular ao process code into single bundle file and saves at provided location.')
+  .option('--out-dir [outDir]', 'Used with --build-only to output the single bundle contract file to a specified directory.')
   .option('--concurrency [limit]', 'Concurrency limit for deploying multiple processes.', '5')
   .option('--retry-count [count]', 'Number of retries for deploying contract.', '10')
   .option('--retry-delay [delay]', 'Delay between retries in milliseconds.', '3000')
@@ -98,8 +98,8 @@ program.parse(process.argv)
 const options = program.opts()
 const contractOrConfigPath = program.args[0]
 const isContractPath = contractOrConfigPath.endsWith('.lua')
-const isOnlyBuild = options.onlyBuild
-const buildOutput = options.buildOutput || './process-dist'
+const isBuildOnly = options.buildOnly
+const outDir = options.outDir || './process-dist'
 
 async function deploymentHandler() {
   try {
@@ -163,13 +163,18 @@ async function deploymentHandler() {
 
 async function buildHandler() {
   try {
-    await clearBuildOutDir(buildOutput)
+    await clearBuildOutDir(outDir)
     Logger.log(packageJson.name, 'Bundling...', false, true)
 
     const name = options.name || 'bundle'
 
     if (isContractPath) {
-      const [result] = await loadAndBundleContracts([{ contractPath: contractOrConfigPath, name, outDir: buildOutput }], 1)
+      const [result] = await loadAndBundleContracts([{
+        contractPath: contractOrConfigPath,
+        name,
+        outDir,
+        luaPath: options.luaPath,
+      }], 1)
 
       if (result && result.status === 'fulfilled') {
         logBundleDetails(result.value)
@@ -188,6 +193,7 @@ async function buildHandler() {
         name: config.name || 'bundle',
         contractPath: config.contractPath,
         outDir: config.outDir || './process-dist',
+        luaPath: config.luaPath,
       }))
       const results = await loadAndBundleContracts(bundlingConfigs, concurrency)
 
@@ -215,7 +221,7 @@ async function buildHandler() {
 
 ;(async () => {
   try {
-    if (isOnlyBuild) {
+    if (isBuildOnly) {
       await buildHandler()
     }
     else {

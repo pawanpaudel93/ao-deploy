@@ -97,6 +97,7 @@ export interface BundlingConfig {
   name: string
   contractPath: string
   outDir: string
+  luaPath?: string
 }
 
 export interface Module { name: string, path: string, content?: string, dependencies?: Set<string> }

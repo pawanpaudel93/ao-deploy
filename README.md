@@ -57,8 +57,8 @@ Options:
   -c, --cron [interval]         Cron interval for the process (e.g. 1-minute, 5-minutes).
   -t, --tags [tags...]          Additional tags for spawning the process.
   -p, --process-id [processId]  Specify process Id of existing process.
-  --build-only                  Only bundle modular lua project into single file stored at process-dist.
-  --out-dir [path]              Used with --build-only to output the single bundle contract file to a specified directory.
+  --build-only                  Bundle the contract into a single file and store it in the process-dist directory.
+  --out-dir [outDir]            Used with --build-only to output the single bundle contract file to a specified directory.
   --concurrency [limit]         Concurrency limit for deploying multiple processes. (default: "5")
   --retry-count [count]         Number of retries for deploying contract. (default: "10")
   --retry-delay [delay]         Delay between retries in milliseconds. (default: "3000")

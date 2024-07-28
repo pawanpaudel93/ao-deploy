@@ -87,7 +87,7 @@ program
   .option('-c, --cron [interval]', 'Cron interval for the process (e.g. 1-minute, 5-minutes).')
   .option('-t, --tags [tags...]', 'Additional tags for spawning the process.')
   .option('-p, --process-id [processId]', 'Specify process Id of an existing process.')
-  .option('--build-only', 'Only bundles modular ao process code into single bundle file and saves at provided location.')
+  .option('--build-only', 'Bundle the contract into a single file and store it in the process-dist directory.')
   .option('--out-dir [outDir]', 'Used with --build-only to output the single bundle contract file to a specified directory.')
   .option('--concurrency [limit]', 'Concurrency limit for deploying multiple processes.', '5')
   .option('--retry-count [count]', 'Number of retries for deploying contract.', '10')

@@ -2,11 +2,19 @@
 
 [![npm version][npm-version-src]][npm-version-href]
 [![npm downloads][npm-downloads-src]][npm-downloads-href]
-[![bundle][bundle-src]][bundle-href]
 [![JSDocs][jsdocs-src]][jsdocs-href]
 [![License][license-src]][license-href]
 
 A package for deploying AO contracts.
+
+## Features
+
+- Build only or deploy AO contracts with ease.
+- Custom LUA_PATH support.
+- Support LuaRocks packages.
+- Support for deployment configuration.
+- Flexible concurrency and retry options for reliable deployments.
+- CLI and API interfaces for versatile usage.
 
 ## Installation
 
@@ -52,24 +60,27 @@ Options:
   -w, --wallet [wallet]         Path to the wallet JWK file.
   -l, --lua-path [luaPath]      Specify the Lua modules path seperated by semicolon.
   -d, --deploy [deploy]         List of deployment configuration names, separated by commas.
+  -b, --build [build]           List of deployment configuration names, separated by commas.
   -s, --scheduler [scheduler]   Scheduler to be used for the process. (default: "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA")
   -m, --module [module]         Module source for spawning the process.
   -c, --cron [interval]         Cron interval for the process (e.g. 1-minute, 5-minutes).
   -t, --tags [tags...]          Additional tags for spawning the process.
   -p, --process-id [processId]  Specify process Id of existing process.
+  --build-only                  Bundle the contract into a single file and store it in the process-dist directory.
+  --out-dir [outDir]            Used with --build-only to output the single bundle contract file to a specified directory.
   --concurrency [limit]         Concurrency limit for deploying multiple processes. (default: "5")
   --retry-count [count]         Number of retries for deploying contract. (default: "10")
   --retry-delay [delay]         Delay between retries in milliseconds. (default: "3000")
   -h, --help                    display help for command
 ```
 
-#### CLI Examples
+#### Example: Deploy contract
 
 ```sh
 ao-deploy process.lua -n tictactoe -w wallet.json --tags name1:value1 name2:value2
 ```
 
-##### Deployment with configuration
+#### Example: Deploy contracts with configuration
 
 Here is an example using a deployment configuration:
 
@@ -114,6 +125,71 @@ Deploy specific contracts:
 
 ```sh
 ao-deploy aod.config.ts --deploy=contract_1,contract_3
+```
+
+#### Example: Build Contract
+
+To Build contracts and produce single bundle lua file, take a look at below provided commands
+
+Build contract and save to default(`process-dist`) directory:
+
+```sh
+aod src/process.lua -n my-process --build-only
+```
+
+Build contract and save to specific directory:
+
+```sh
+aod src/process.lua -n my-process --build-only --out-dir <PATH>
+aod src/process.lua -n my-process --build-only --out-dir ./dist
+```
+
+#### Example: Build Contracts using Configuration
+
+To Build contracts using config, take a look at below provided example
+
+Here is an example using a deployment configuration:
+
+```ts
+// aod.config.ts
+import { defineConfig } from 'ao-deploy'
+
+const luaPath = './?.lua;./src/?.lua'
+
+const config = defineConfig({
+  contract_1: {
+    luaPath,
+    name: `contract-1`,
+    contractPath: 'contract-1.lua',
+    outDir: './dist',
+  },
+  contract_2: {
+    luaPath,
+    name: `contract-2`,
+    contractPath: 'contract-2.lua',
+    outDir: './dist',
+  },
+  contract_3: {
+    luaPath,
+    name: `contract-3`,
+    contractPath: 'contract-3.lua',
+    outDir: './dist',
+  }
+})
+
+export default config
+```
+
+Build all specified contracts:
+
+```sh
+ao-deploy aod.config.ts --build-only
+```
+
+Build specific contracts:
+
+```sh
+ao-deploy aod.config.ts --build=contract_1,contract_3 --build-only
 ```
 
 > [!Note]
@@ -251,8 +327,6 @@ Copyright © 2024 [Pawan Paudel](https://github.com/pawanpaudel93).
 [npm-version-href]: https://npmjs.com/package/ao-deploy
 [npm-downloads-src]: https://img.shields.io/npm/dm/ao-deploy?style=flat&colorA=080f12&colorB=1fa669
 [npm-downloads-href]: https://npmjs.com/package/ao-deploy
-[bundle-src]: https://img.shields.io/bundlephobia/minzip/ao-deploy?style=flat&colorA=080f12&colorB=1fa669&label=minzip
-[bundle-href]: https://bundlephobia.com/result?p=ao-deploy
 [license-src]: https://img.shields.io/github/license/pawanpaudel93/ao-deploy.svg?style=flat&colorA=080f12&colorB=1fa669
 [license-href]: https://github.com/pawanpaudel93/ao-deploy/blob/main/LICENSE
 [jsdocs-src]: https://img.shields.io/badge/jsdocs-reference-080f12?style=flat&colorA=080f12&colorB=1fa669

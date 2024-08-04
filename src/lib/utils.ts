@@ -11,7 +11,7 @@ export const arweave = Arweave.init({
   protocol: 'https',
 })
 
-export const ardb = new ((Ardb as any)?.default ?? Ardb)(arweave)
+export const ardb: Ardb = new ((Ardb as any)?.default ?? Ardb)(arweave)
 
 export function isArweaveAddress(address: any): boolean {
   return typeof address === 'string' && /^[a-z0-9-_]{43}$/i.test(address)

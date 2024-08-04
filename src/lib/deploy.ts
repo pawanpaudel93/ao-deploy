@@ -43,18 +43,21 @@ export class DeploymentsManager {
     }
   }
 
-  async #findProcess(name: string, owner: string) {
-    const tx = await ardb
-      .appName('aos')
-      .search('transactions')
-      .from(owner)
-      .only('id')
-      .tags([
-        { name: 'Data-Protocol', values: ['ao'] },
-        { name: 'Type', values: ['Process'] },
-        { name: 'Name', values: [name] },
-      ])
-      .findOne()
+  async #findProcess(name: string, owner: string, retry: DeployConfig['retry']) {
+    const tx = await retryWithDelay(
+      () => ardb
+        .search('transactions')
+        .from(owner)
+        .only('id')
+        .tags([
+          { name: 'Data-Protocol', values: ['ao'] },
+          { name: 'Type', values: ['Process'] },
+          { name: 'Name', values: [name] },
+        ])
+        .findOne(),
+      retry?.count,
+      retry?.delay,
+    )
 
     return tx?.id
   }
@@ -89,7 +92,7 @@ export class DeploymentsManager {
     const signer = createDataItemSigner(walletInstance.jwk)
 
     if (!processId || (processId && !isArweaveAddress(processId))) {
-      processId = await this.#findProcess(name, owner)
+      processId = await this.#findProcess(name, owner, retry)
     }
 
     const isNewProcess = !processId
@@ -98,9 +101,9 @@ export class DeploymentsManager {
       logger.log('Spawning new process...', false, true)
       tags = Array.isArray(tags) ? tags : []
       tags = [
-        { name: 'App-Name', value: 'aos' },
+        { name: 'App-Name', value: 'ao-deploy' },
         { name: 'Name', value: name },
-        { name: 'aos-Version', value: aosDetails.version },
+        { name: 'aos-Version', value: 'REPLACE-AO-DEPLOY-VERSION' },
         { name: 'Authority', value: 'fcoN_xJeisVsPXA-trzVAuIiqO3ydLQxM-L4XbrQKzY' },
         ...tags,
       ]

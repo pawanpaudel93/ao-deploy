@@ -62,7 +62,7 @@ export class ConfigManager {
       }
 
       const requiredStringProps: (keyof DeployConfig)[] = ['contractPath', 'name']
-      const optionalStringProps: (keyof DeployConfig)[] = ['module', 'scheduler', 'cron', 'luaPath', 'wallet', 'configName', 'processId']
+      const optionalStringProps: (keyof DeployConfig)[] = ['module', 'scheduler', 'cron', 'luaPath', 'wallet', 'configName', 'processId', 'outDir']
 
       const hasRequiredStrings = requiredStringProps.every(prop => this.#isNonEmptyString(deployConfig[prop]))
       const hasOptionalStrings = optionalStringProps.every(prop => !deployConfig[prop] || this.#isString(deployConfig[prop]))
@@ -70,7 +70,11 @@ export class ConfigManager {
       const tagsValid = this.#validateTags(deployConfig.tags)
       const retryValid = this.#validateRetry(deployConfig.retry)
 
-      return hasRequiredStrings && hasOptionalStrings && tagsValid && retryValid
+      // Validate other types
+      const concurrencyValid = deployConfig.concurrency === undefined || Number.isInteger(deployConfig.concurrency)
+      const sqliteValid = deployConfig.sqlite === undefined || typeof deployConfig.sqlite === 'boolean'
+
+      return hasRequiredStrings && hasOptionalStrings && tagsValid && retryValid && concurrencyValid && sqliteValid
     })
   }
 

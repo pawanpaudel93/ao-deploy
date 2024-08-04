@@ -15,7 +15,7 @@ import { Logger } from './logger'
  * Manages deployments of contracts to AO.
  */
 export class DeploymentsManager {
-  #cachedAosDetails: { version: string, module: string, scheduler: string } | null = null
+  #cachedAosDetails: { version: string, module: string, sqliteModule: string, scheduler: string } | null = null
 
   async #getAosDetails() {
     if (this.#cachedAosDetails) {
@@ -24,16 +24,18 @@ export class DeploymentsManager {
 
     const defaultDetails = {
       version: '1.10.22',
-      module: 'SBNb1qPQ1TDwpD_mboxm2YllmMLXpWw4U8P9Ff8W9vk',
+      module: 'xT0ogTeagEGuySbKuUoo_NaWeeBv1fZ4MqgDdKVKY0U',
+      sqliteModule: 'sFNHeYzhHfP9vV9CPpqZMU-4Zzq_qKGKwlwMZozWi2Y',
       scheduler: '_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA',
     }
 
     try {
       const response = await fetch('https://raw.githubusercontent.com/permaweb/aos/main/package.json')
-      const pkg = await response.json() as { version: string, aos: { module: string } }
+      const pkg = await response.json() as { version: string, aos: { module: string, sqlite: string } }
       this.#cachedAosDetails = {
         version: pkg?.version || defaultDetails.version,
         module: pkg?.aos?.module || defaultDetails.module,
+        sqliteModule: pkg?.aos?.sqlite || defaultDetails.sqliteModule,
         scheduler: defaultDetails.scheduler,
       }
       return this.#cachedAosDetails
@@ -74,7 +76,7 @@ export class DeploymentsManager {
    * @param {DeployConfig} deployConfig - Configuration options for the deployment.
    * @returns {Promise<DeployResult>} The result of the deployment.
    */
-  async deployContract({ name, wallet, contractPath, tags, cron, module, scheduler, retry, luaPath, configName, processId }: DeployConfig): Promise<DeployResult> {
+  async deployContract({ name, wallet, contractPath, tags, cron, module, scheduler, retry, luaPath, configName, processId, sqlite }: DeployConfig): Promise<DeployResult> {
     name = name || 'default'
     configName = configName || name
     retry = {
@@ -84,7 +86,7 @@ export class DeploymentsManager {
 
     const logger = new Logger(configName)
     const aosDetails = await this.#getAosDetails()
-    module = isArweaveAddress(module) ? module! : aosDetails.module
+    module = isArweaveAddress(module) ? module! : sqlite ? aosDetails.sqliteModule : aosDetails.module
     scheduler = isArweaveAddress(scheduler) ? scheduler! : aosDetails.scheduler
 
     const walletInstance = await Wallet.load(wallet)

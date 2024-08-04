@@ -14,7 +14,7 @@ export const arweave = Arweave.init({
 export const ardb: Ardb = new ((Ardb as any)?.default ?? Ardb)(arweave)
 
 export function isArweaveAddress(address: any): boolean {
-  return typeof address === 'string' && /^[a-z0-9-_]{43}$/i.test(address)
+  return typeof address === 'string' && /^[\w-]{43}$/.test(address)
 }
 
 export async function sleep(delay: number = 3000) {
@@ -63,7 +63,7 @@ export async function writeFileToProjectDir(data: string, outDir: string, fileNa
     }
     await writeFile(fullPath, data)
   }
-  catch (error) {
+  catch {
     throw new Error(`Failed to write bundle to ${outDir}`)
   }
 }
@@ -79,7 +79,7 @@ export async function clearBuildOutDir(outDir: string) {
 
     rmSync(outDir, { recursive: true, force: true })
   }
-  catch (error) {
+  catch {
     throw new Error(`Failed to clear ${outDir}`)
   }
 }

@@ -43,7 +43,7 @@ export class Wallet {
       const jwk = fs.readFileSync(jwkOrPath as string, 'utf8')
       return JSON.parse(jwk)
     }
-    catch (e) {
+    catch {
       if (fs.existsSync(path.resolve(`${os.homedir()}/.aos.json`))) {
         return JSON.parse(fs.readFileSync(path.resolve(`${os.homedir()}/.aos.json`), 'utf-8'))
       }

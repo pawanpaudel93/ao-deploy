@@ -63,7 +63,7 @@ export class LuaProjectLoader {
         }
       }
     }
-    catch (error) { }
+    catch { }
   }
 
   #createExecutableFromProject(project: Module[]) {
@@ -139,6 +139,7 @@ export class LuaProjectLoader {
   }
 
   async #findRequires(data: string, cwd: string): Promise<Module[]> {
+    // eslint-disable-next-line regexp/no-super-linear-backtracking
     const requirePattern = /(?<=(require( *)(\n*)(\()?( *)("|'))).*(?=("|'))/g
     const requiredModules = (data.match(requirePattern) || []).map(async (mod) => {
       const modPath = await this.#getModulePath(mod, cwd)
@@ -193,7 +194,7 @@ export class LuaProjectLoader {
         name: config.name,
       }
     }
-    catch (error) {
+    catch {
       throw new Error(chalk.red(`Failed to load and bundle contract at: ${config.contractPath}`))
     }
   }

@@ -65,7 +65,7 @@ export class DeploymentsManager {
   }
 
   #validateCron(cron: string) {
-    const cronRegex = /^\d+\-(Second|second|Minute|Minute|Hour|hour|Day|day|Month|month|Year|year|Block|block)s?$/
+    const cronRegex = /^\d+-(?:Second|second|Minute|minute|Hour|hour|Day|day|Month|month|Year|year|Block|block)s?$/
     if (!cronRegex.test(cron)) {
       throw new Error('Invalid cron flag!')
     }

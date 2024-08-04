@@ -101,6 +101,7 @@ export class DeploymentsManager {
         { name: 'App-Name', value: 'aos' },
         { name: 'Name', value: name },
         { name: 'aos-Version', value: aosDetails.version },
+        { name: 'Authority', value: 'fcoN_xJeisVsPXA-trzVAuIiqO3ydLQxM-L4XbrQKzY' },
         ...tags,
       ]
 

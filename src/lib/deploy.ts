@@ -5,7 +5,7 @@ import {
   spawn,
 } from '@permaweb/aoconnect'
 import pLimit from 'p-limit'
-import type { DeployConfig, DeployResult } from '../types'
+import type { AosConfig, DeployConfig, DeployResult } from '../types'
 import { Wallet } from './wallet'
 import { LuaProjectLoader } from './loader'
 import { ardb, isArweaveAddress, retryWithDelay, sleep } from './utils'
@@ -15,30 +15,28 @@ import { Logger } from './logger'
  * Manages deployments of contracts to AO.
  */
 export class DeploymentsManager {
-  #cachedAosDetails: { version: string, module: string, sqliteModule: string, scheduler: string } | null = null
+  #cachedAosConfig: AosConfig | null = null
 
   async #getAosDetails() {
-    if (this.#cachedAosDetails) {
-      return this.#cachedAosDetails
+    if (this.#cachedAosConfig) {
+      return this.#cachedAosConfig
     }
 
     const defaultDetails = {
-      version: '1.10.22',
-      module: 'xT0ogTeagEGuySbKuUoo_NaWeeBv1fZ4MqgDdKVKY0U',
-      sqliteModule: 'sFNHeYzhHfP9vV9CPpqZMU-4Zzq_qKGKwlwMZozWi2Y',
+      module: 'cNlipBptaF9JeFAf4wUmpi43EojNanIBos3EfNrEOWo',
+      sqliteModule: 'u1Ju_X8jiuq4rX9Nh-ZGRQuYQZgV2MKLMT3CZsykk54',
       scheduler: '_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA',
     }
 
     try {
-      const response = await fetch('https://raw.githubusercontent.com/permaweb/aos/main/package.json')
-      const pkg = await response.json() as { version: string, aos: { module: string, sqlite: string } }
-      this.#cachedAosDetails = {
-        version: pkg?.version || defaultDetails.version,
-        module: pkg?.aos?.module || defaultDetails.module,
-        sqliteModule: pkg?.aos?.sqlite || defaultDetails.sqliteModule,
-        scheduler: defaultDetails.scheduler,
+      const response = await fetch('https://raw.githubusercontent.com/pawanpaudel93/ao-deploy-config/main/config.json')
+      const config = await response.json() as AosConfig
+      this.#cachedAosConfig = {
+        module: config?.module || defaultDetails.module,
+        sqliteModule: config?.sqliteModule || defaultDetails.sqliteModule,
+        scheduler: config?.scheduler || defaultDetails.scheduler,
       }
-      return this.#cachedAosDetails
+      return this.#cachedAosConfig
     }
     catch {
       return defaultDetails

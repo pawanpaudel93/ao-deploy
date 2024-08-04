@@ -105,3 +105,9 @@ export interface BundlingConfig {
 }
 
 export interface Module { name: string, path: string, content?: string, dependencies?: Set<string> }
+
+export interface AosConfig {
+  module: string
+  sqliteModule: string
+  scheduler: string
+}

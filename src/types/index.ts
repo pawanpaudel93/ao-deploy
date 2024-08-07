@@ -16,7 +16,7 @@ export interface DeployConfig {
   contractPath: string
   /**
    * The module source to use to spin up Process
-   * @default "Fetches from `https://raw.githubusercontent.com/permaweb/aos/main/package.json`"
+   * @default "Fetches from `https://raw.githubusercontent.com/pawanpaudel93/ao-deploy-config/main/config.json`"
    */
   module?: string
   /**

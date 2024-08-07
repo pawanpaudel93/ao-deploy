@@ -89,9 +89,10 @@ program
   .option('-p, --process-id [processId]', 'Specify process Id of an existing process.')
   .option('--build-only', 'Bundle the contract into a single file and store it in the process-dist directory.')
   .option('--out-dir [outDir]', 'Used with --build-only to output the single bundle contract file to a specified directory.')
-  .option('--concurrency [limit]', 'Concurrency limit for deploying multiple processes.', '5')
-  .option('--retry-count [count]', 'Number of retries for deploying contract.', '10')
-  .option('--retry-delay [delay]', 'Delay between retries in milliseconds.', '3000')
+  .option('--concurrency [limit]', 'Concurrency limit for deploying multiple processes.', parseToInt, 5)
+  .option('--sqlite', 'Use sqlite aos module when spawning new process')
+  .option('--retry-count [count]', 'Number of retries for deploying contract.', parseToInt, 10)
+  .option('--retry-delay [delay]', 'Delay between retries in milliseconds.', parseToInt, 3000)
 
 program.parse(process.argv)
 
@@ -131,6 +132,7 @@ async function deploymentHandler() {
           luaPath: options.luaPath,
           configName: options.name,
           processId: options.processId,
+          sqlite: options.sqlite,
         },
       )
       logDeploymentDetails(result)

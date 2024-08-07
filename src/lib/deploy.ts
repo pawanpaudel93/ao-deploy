@@ -5,7 +5,7 @@ import {
   spawn,
 } from '@permaweb/aoconnect'
 import pLimit from 'p-limit'
-import type { DeployConfig, DeployResult } from '../types'
+import type { AosConfig, DeployConfig, DeployResult } from '../types'
 import { Wallet } from './wallet'
 import { LuaProjectLoader } from './loader'
 import { ardb, isArweaveAddress, retryWithDelay, sleep } from './utils'
@@ -15,52 +15,55 @@ import { Logger } from './logger'
  * Manages deployments of contracts to AO.
  */
 export class DeploymentsManager {
-  #cachedAosDetails: { version: string, module: string, scheduler: string } | null = null
+  #cachedAosConfig: AosConfig | null = null
 
   async #getAosDetails() {
-    if (this.#cachedAosDetails) {
-      return this.#cachedAosDetails
+    if (this.#cachedAosConfig) {
+      return this.#cachedAosConfig
     }
 
     const defaultDetails = {
-      version: '1.10.22',
-      module: 'SBNb1qPQ1TDwpD_mboxm2YllmMLXpWw4U8P9Ff8W9vk',
+      module: 'cNlipBptaF9JeFAf4wUmpi43EojNanIBos3EfNrEOWo',
+      sqliteModule: 'u1Ju_X8jiuq4rX9Nh-ZGRQuYQZgV2MKLMT3CZsykk54',
       scheduler: '_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA',
     }
 
     try {
-      const response = await fetch('https://raw.githubusercontent.com/permaweb/aos/main/package.json')
-      const pkg = await response.json() as { version: string, aos: { module: string } }
-      this.#cachedAosDetails = {
-        version: pkg?.version || defaultDetails.version,
-        module: pkg?.aos?.module || defaultDetails.module,
-        scheduler: defaultDetails.scheduler,
+      const response = await fetch('https://raw.githubusercontent.com/pawanpaudel93/ao-deploy-config/main/config.json')
+      const config = await response.json() as AosConfig
+      this.#cachedAosConfig = {
+        module: config?.module || defaultDetails.module,
+        sqliteModule: config?.sqliteModule || defaultDetails.sqliteModule,
+        scheduler: config?.scheduler || defaultDetails.scheduler,
       }
-      return this.#cachedAosDetails
+      return this.#cachedAosConfig
     }
     catch {
       return defaultDetails
     }
   }
 
-  async #findProcess(name: string, owner: string) {
-    const tx = await ardb
-      .appName('aos')
-      .search('transactions')
-      .from(owner)
-      .only('id')
-      .tags([
-        { name: 'Data-Protocol', values: ['ao'] },
-        { name: 'Type', values: ['Process'] },
-        { name: 'Name', values: [name] },
-      ])
-      .findOne()
+  async #findProcess(name: string, owner: string, retry: DeployConfig['retry']) {
+    const tx = await retryWithDelay(
+      () => ardb
+        .search('transactions')
+        .from(owner)
+        .only('id')
+        .tags([
+          { name: 'Data-Protocol', values: ['ao'] },
+          { name: 'Type', values: ['Process'] },
+          { name: 'Name', values: [name] },
+        ])
+        .findOne(),
+      retry?.count,
+      retry?.delay,
+    )
 
     return tx?.id
   }
 
   #validateCron(cron: string) {
-    const cronRegex = /^\d+\-(Second|second|Minute|Minute|Hour|hour|Day|day|Month|month|Year|year|Block|block)s?$/
+    const cronRegex = /^\d+-(?:Second|second|Minute|minute|Hour|hour|Day|day|Month|month|Year|year|Block|block)s?$/
     if (!cronRegex.test(cron)) {
       throw new Error('Invalid cron flag!')
     }
@@ -71,7 +74,7 @@ export class DeploymentsManager {
    * @param {DeployConfig} deployConfig - Configuration options for the deployment.
    * @returns {Promise<DeployResult>} The result of the deployment.
    */
-  async deployContract({ name, wallet, contractPath, tags, cron, module, scheduler, retry, luaPath, configName, processId }: DeployConfig): Promise<DeployResult> {
+  async deployContract({ name, wallet, contractPath, tags, cron, module, scheduler, retry, luaPath, configName, processId, sqlite }: DeployConfig): Promise<DeployResult> {
     name = name || 'default'
     configName = configName || name
     retry = {
@@ -81,7 +84,7 @@ export class DeploymentsManager {
 
     const logger = new Logger(configName)
     const aosDetails = await this.#getAosDetails()
-    module = isArweaveAddress(module) ? module! : aosDetails.module
+    module = isArweaveAddress(module) ? module! : sqlite ? aosDetails.sqliteModule : aosDetails.module
     scheduler = isArweaveAddress(scheduler) ? scheduler! : aosDetails.scheduler
 
     const walletInstance = await Wallet.load(wallet)
@@ -89,7 +92,7 @@ export class DeploymentsManager {
     const signer = createDataItemSigner(walletInstance.jwk)
 
     if (!processId || (processId && !isArweaveAddress(processId))) {
-      processId = await this.#findProcess(name, owner)
+      processId = await this.#findProcess(name, owner, retry)
     }
 
     const isNewProcess = !processId
@@ -98,9 +101,9 @@ export class DeploymentsManager {
       logger.log('Spawning new process...', false, true)
       tags = Array.isArray(tags) ? tags : []
       tags = [
-        { name: 'App-Name', value: 'aos' },
+        { name: 'App-Name', value: 'ao-deploy' },
         { name: 'Name', value: name },
-        { name: 'aos-Version', value: aosDetails.version },
+        { name: 'aos-Version', value: 'REPLACE-AO-DEPLOY-VERSION' },
         { name: 'Authority', value: 'fcoN_xJeisVsPXA-trzVAuIiqO3ydLQxM-L4XbrQKzY' },
         ...tags,
       ]

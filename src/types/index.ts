@@ -16,7 +16,7 @@ export interface DeployConfig {
   contractPath: string
   /**
    * The module source to use to spin up Process
-   * @default "Fetches from `https://raw.githubusercontent.com/permaweb/aos/main/package.json`"
+   * @default "Fetches from `https://raw.githubusercontent.com/pawanpaudel93/ao-deploy-config/main/config.json`"
    */
   module?: string
   /**
@@ -74,6 +74,10 @@ export interface DeployConfig {
    * Output directory of bundle
    */
   outDir?: string
+  /**
+   * Use sqlite aos module when spawning new process
+   */
+  sqlite?: boolean
 }
 
 export type Config = Record<ConfigName, DeployConfig>
@@ -101,3 +105,9 @@ export interface BundlingConfig {
 }
 
 export interface Module { name: string, path: string, content?: string, dependencies?: Set<string> }
+
+export interface AosConfig {
+  module: string
+  sqliteModule: string
+  scheduler: string
+}

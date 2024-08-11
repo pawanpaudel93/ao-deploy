@@ -3,28 +3,35 @@ import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import createJITI from 'jiti'
 import type { Config, DeployConfig } from '../types'
+import { isArweaveAddress, isCronPattern, isLuaFile, isUrl, jsonStringify } from './utils'
+import { defaultLogger } from './logger'
 
 const __filename = fileURLToPath(import.meta.url)
-
 const jiti = createJITI(__filename)
 
 export class ConfigManager {
   #config: Config = {}
 
   constructor(configPath: string) {
-    const loadedConfig = this.#load(configPath)
-    if (ConfigManager.isValidConfig(loadedConfig)) {
-      this.#config = loadedConfig
-    }
-    else {
-      throw new Error('Invalid config file loaded.')
-    }
+    this.#loadConfig(configPath)
   }
 
-  #load(configPath: string) {
-    const fullPath = path.join(process.cwd(), configPath)
-    const configs = jiti(fullPath)
-    return configs.default ?? configs
+  #loadConfig(configPath: string) {
+    try {
+      const fullPath = path.join(process.cwd(), configPath)
+      const loadedConfig = jiti(fullPath)
+      const config = loadedConfig.default ?? loadedConfig
+
+      if (!ConfigManager.isValidConfig(config)) {
+        throw new Error('Invalid config file.')
+      }
+
+      this.#config = config
+    }
+    catch (error: any) {
+      defaultLogger.error(error)
+      throw new Error('Failed to load a valid config file. Please check the logs for more details.')
+    }
   }
 
   static #isNonEmptyString(value: any): boolean {
@@ -35,46 +42,98 @@ export class ConfigManager {
     return typeof value === 'string'
   }
 
-  static #validateTags(tags?: DeployConfig['tags']): boolean {
-    return tags === undefined || (Array.isArray(tags) && tags.length === 0) || (Array.isArray(tags) && tags.every(tag =>
+  static #validateTags(tags: DeployConfig['tags'], keyName: string): boolean {
+    const isValid = tags === undefined || (Array.isArray(tags) && tags.length === 0) || (Array.isArray(tags) && tags.every(tag =>
       tag && typeof tag === 'object' && this.#isNonEmptyString(tag.name) && this.#isNonEmptyString(tag.value),
     ))
+
+    if (!isValid) {
+      throw new Error(`Invalid tags configuration for "${keyName}": \n${jsonStringify(tags)}`)
+    }
+
+    return true
   }
 
-  static #validateRetry(retry?: DeployConfig['retry']): boolean {
-    return retry === undefined || (
+  static #validateRetry(retry: DeployConfig['retry'], keyName: string): boolean {
+    const isValid = retry === undefined || (
       typeof retry === 'object'
       && (retry.count === undefined || (typeof retry.count === 'number' && retry.count >= 0))
       && (retry.delay === undefined || (typeof retry.delay === 'number' && retry.delay >= 0))
     )
+
+    if (!isValid) {
+      throw new Error(`Invalid retry configuration for "${keyName}": \n${jsonStringify(retry)}`)
+    }
+
+    return true
+  }
+
+  static #validateServices(services: DeployConfig['services'], keyName: string): boolean {
+    const isValid = services === undefined || (
+      typeof services === 'object'
+      && (services.gatewayUrl === undefined || isUrl(services?.gatewayUrl))
+      && (services.cuUrl === undefined || isUrl(services?.cuUrl))
+      && (services.muUrl === undefined || isUrl(services?.muUrl))
+    )
+
+    if (!isValid) {
+      throw new Error(`Invalid services configuration for "${keyName}": \n${jsonStringify(services)}`)
+    }
+
+    return true
+  }
+
+  static #validateOptionalProps(deployConfig: DeployConfig, keyName: string): void {
+    const optionalAddressProps: (keyof DeployConfig)[] = ['module', 'scheduler', 'processId']
+    const optionalStringProps: (keyof DeployConfig)[] = ['name', 'configName', 'luaPath', 'wallet', 'outDir']
+
+    optionalAddressProps.forEach((prop) => {
+      if (deployConfig[prop] && !isArweaveAddress(deployConfig[prop])) {
+        throw new Error(`Invalid optional property "${prop}" in configuration for "${keyName}": ${jsonStringify(deployConfig[prop])}`)
+      }
+    })
+
+    optionalStringProps.forEach((prop) => {
+      if (deployConfig[prop] && !this.#isString(deployConfig[prop])) {
+        throw new Error(`Invalid optional property "${prop}" in configuration for "${keyName}": ${jsonStringify(deployConfig[prop])}`)
+      }
+    })
   }
 
   static isValidConfig(config: Config): boolean {
     // Check if config exists, is an object, and is not empty
     if (!config || typeof config !== 'object' || Object.keys(config).length === 0) {
-      return false
+      throw new Error('Config is missing or invalid.')
     }
 
     // Check if every entry in the object values has a 'contractPath'
-    return Object.values(config).every((deployConfig) => {
-      if (!deployConfig || typeof deployConfig !== 'object') {
-        return false
+    return Object.entries(config).every(([name, deployConfig]) => {
+      if (!deployConfig || typeof deployConfig !== 'object' || Object.keys(deployConfig).length === 0) {
+        throw new Error(`Invalid configuration for "${name}": \n${jsonStringify(deployConfig)}`)
       }
 
-      const requiredStringProps: (keyof DeployConfig)[] = ['contractPath', 'name']
-      const optionalStringProps: (keyof DeployConfig)[] = ['module', 'scheduler', 'cron', 'luaPath', 'wallet', 'configName', 'processId', 'outDir']
+      if (!isLuaFile(deployConfig.contractPath)) {
+        throw new Error(`A "*.lua" file is required for "contractPath" in configuration for "${name}".`)
+      }
 
-      const hasRequiredStrings = requiredStringProps.every(prop => this.#isNonEmptyString(deployConfig[prop]))
-      const hasOptionalStrings = optionalStringProps.every(prop => !deployConfig[prop] || this.#isString(deployConfig[prop]))
+      this.#validateOptionalProps(deployConfig, name)
+      this.#validateTags(deployConfig.tags, name)
+      this.#validateRetry(deployConfig.retry, name)
+      this.#validateServices(deployConfig.services, name)
 
-      const tagsValid = this.#validateTags(deployConfig.tags)
-      const retryValid = this.#validateRetry(deployConfig.retry)
+      if (deployConfig.cron && !isCronPattern(deployConfig.cron)) {
+        throw new Error(`Invalid cron value in configuration for "${name}": ${jsonStringify(deployConfig.cron)}`)
+      }
 
-      // Validate other types
-      const concurrencyValid = deployConfig.concurrency === undefined || Number.isInteger(deployConfig.concurrency)
-      const sqliteValid = deployConfig.sqlite === undefined || typeof deployConfig.sqlite === 'boolean'
+      if (deployConfig.concurrency && !Number.isInteger(deployConfig.concurrency)) {
+        throw new Error(`Invalid concurrency value in configuration for "${name}": ${jsonStringify(deployConfig.concurrency)}`)
+      }
 
-      return hasRequiredStrings && hasOptionalStrings && tagsValid && retryValid && concurrencyValid && sqliteValid
+      if (deployConfig.sqlite !== undefined && typeof deployConfig.sqlite !== 'boolean') {
+        throw new Error(`Invalid sqlite value in configuration for "${name}": ${jsonStringify(deployConfig.sqlite)}`)
+      }
+
+      return true
     })
   }
 
@@ -93,11 +152,12 @@ export class ConfigManager {
   getDeployConfigs(deploy: string) {
     const configNames = (deploy ?? '').split(',').map((name: string) => name.trim()).filter(Boolean)
     const config = this.getConfigFromNames(configNames)
+
     if (Object.keys(config).length === 0) {
-      throw new Error(`Config file doesn't have names from ${deploy}`)
+      throw new Error(`No matching configurations found for "${deploy}". Please verify the configuration names.`)
     }
-    const deployConfigs = Object.entries(config).map(([name, config]) => ({ ...config, configName: name }))
-    return deployConfigs
+
+    return Object.entries(config).map(([name, config]) => ({ ...config, configName: name }))
   }
 }
 
@@ -109,7 +169,8 @@ export class ConfigManager {
  */
 export function defineConfig(config: Config) {
   if (!ConfigManager.isValidConfig(config)) {
-    throw new Error('Invalid config file loaded.')
+    throw new Error('Invalid config file loaded. Please check the logs for more details.')
   }
+
   return config
 }

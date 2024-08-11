@@ -12,7 +12,7 @@ import type { BundleResult, DeployResult, Tag } from './types'
 import { Logger } from './lib/logger'
 import { BuildError, DeployError } from './lib/error'
 import { loadAndBundleContracts } from './lib/loader'
-import { clearBuildOutDir } from './lib/utils'
+import { clearBuildOutDir, isLuaFile, parseToInt, parseUrl } from './lib/utils'
 
 const PKG_ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '../')
 
@@ -33,14 +33,6 @@ function getPackageJson() {
   const packageJsonPath = path.join(PKG_ROOT, 'package.json')
   const packageJson = JSON.parse(fs.readFileSync(packageJsonPath).toString())
   return packageJson
-}
-
-function parseToInt(value: string, defaultValue: number) {
-  const parsedValue = Number.parseInt(value)
-  if (Number.isNaN(parsedValue)) {
-    return defaultValue
-  }
-  return parsedValue
 }
 
 function logDeploymentDetails(result: DeployResult) {
@@ -89,6 +81,9 @@ program
   .option('-p, --process-id [processId]', 'Specify process Id of an existing process.')
   .option('--build-only', 'Bundle the contract into a single file and store it in the process-dist directory.')
   .option('--out-dir [outDir]', 'Used with --build-only to output the single bundle contract file to a specified directory.')
+  .option('--gateway-url [url]', 'Custom Gateway URL to connect to.', parseUrl, 'https://arweave.net')
+  .option('--cu-url [url]', 'Custom Compute Unit (CU) URL to connect to.', parseUrl, 'https://cu.ao-testnet.xyz')
+  .option('--mu-url [url]', 'Custom Messenger Unit (MU) URL to connect to.', parseUrl, 'https://mu.ao-testnet.xyz')
   .option('--concurrency [limit]', 'Concurrency limit for deploying multiple processes.', parseToInt, 5)
   .option('--sqlite', 'Use sqlite aos module when spawning new process')
   .option('--retry-count [count]', 'Number of retries for deploying contract.', parseToInt, 10)
@@ -98,7 +93,7 @@ program.parse(process.argv)
 
 const options = program.opts()
 const contractOrConfigPath = program.args[0]
-const isContractPath = contractOrConfigPath.endsWith('.lua')
+const isContractPath = isLuaFile(contractOrConfigPath)
 const isBuildOnly = options.buildOnly
 const outDir = options.outDir || './process-dist'
 
@@ -133,6 +128,11 @@ async function deploymentHandler() {
           configName: options.name,
           processId: options.processId,
           sqlite: options.sqlite,
+          services: {
+            gatewayUrl: options.gatewayUrl,
+            cuUrl: options.cuUrl,
+            muUrl: options.muUrl,
+          },
         },
       )
       logDeploymentDetails(result)

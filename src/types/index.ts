@@ -90,12 +90,6 @@ export interface DeployConfig {
   }
 
   /**
-   * Concurrency limit to deploy multiple processes
-   * @default 5
-   */
-  concurrency?: number
-
-  /**
    * Process Id of an existing process
    */
   processId?: string

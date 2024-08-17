@@ -125,10 +125,6 @@ export class ConfigManager {
         throw new Error(`Invalid cron value in configuration for "${name}": ${jsonStringify(deployConfig.cron)}`)
       }
 
-      if (deployConfig.concurrency && !Number.isInteger(deployConfig.concurrency)) {
-        throw new Error(`Invalid concurrency value in configuration for "${name}": ${jsonStringify(deployConfig.concurrency)}`)
-      }
-
       if (deployConfig.sqlite !== undefined && typeof deployConfig.sqlite !== 'boolean') {
         throw new Error(`Invalid sqlite value in configuration for "${name}": ${jsonStringify(deployConfig.sqlite)}`)
       }

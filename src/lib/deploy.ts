@@ -1,4 +1,4 @@
-import { connect, createDataItemSigner } from '@permaweb/aoconnect'
+import * as aoconnect from '@permaweb/aoconnect'
 import pLimit from 'p-limit'
 import type { AosConfig, DeployConfig, DeployResult, Services } from '../types'
 import { Wallet } from './wallet'
@@ -23,6 +23,22 @@ export class DeploymentsManager {
     }
 
     return services
+  }
+
+  #getAoInstance(services: Services) {
+    if (
+      (!services.cuUrl || services.cuUrl === defaultServices.cuUrl)
+      && (!services.gatewayUrl || services.gatewayUrl === defaultServices.gatewayUrl)
+      && (!services.muUrl || services.muUrl === defaultServices.muUrl)
+    ) {
+      return aoconnect
+    }
+
+    return aoconnect.connect({
+      GATEWAY_URL: services.gatewayUrl,
+      MU_URL: services.muUrl,
+      CU_URL: services.cuUrl,
+    })
   }
 
   async #getAosConfig() {
@@ -96,15 +112,11 @@ export class DeploymentsManager {
 
     const walletInstance = await Wallet.load(wallet)
     const owner = await walletInstance.getAddress()
-    const signer = createDataItemSigner(walletInstance.jwk)
+    const signer = aoconnect.createDataItemSigner(walletInstance.jwk)
     services = this.#validateServices(services)
 
     // Initialize the AO instance with validated URLs
-    const aoInstance = connect({
-      GATEWAY_URL: services.gatewayUrl,
-      MU_URL: services.muUrl,
-      CU_URL: services.cuUrl,
-    })
+    const aoInstance = this.#getAoInstance(services)
 
     if (!processId || (processId && !isArweaveAddress(processId))) {
       processId = await this.#findProcess(name, owner, retry, services.gatewayUrl!)

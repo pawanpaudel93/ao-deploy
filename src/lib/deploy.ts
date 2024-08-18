@@ -3,7 +3,18 @@ import pLimit from 'p-limit'
 import type { AosConfig, DeployConfig, DeployResult, Services } from '../types'
 import { Wallet } from './wallet'
 import { LuaProjectLoader } from './loader'
-import { APP_NAME, defaultServices, getArdb, isArweaveAddress, isCronPattern, isUrl, parseToInt, retryWithDelay, sleep } from './utils'
+import {
+  AOS_QUERY,
+  APP_NAME,
+  defaultServices,
+  getArweave,
+  isArweaveAddress,
+  isCronPattern,
+  isUrl,
+  parseToInt,
+  retryWithDelay,
+  sleep,
+} from './utils'
 import { Logger } from './logger'
 
 /**
@@ -70,22 +81,24 @@ export class DeploymentsManager {
   }
 
   async #findProcess(name: string, owner: string, retry: DeployConfig['retry'], gateway: string) {
-    const tx = await retryWithDelay(
-      () => getArdb(gateway)
-        .search('transactions')
-        .from(owner)
-        .only('id')
-        .tags([
-          { name: 'Data-Protocol', values: ['ao'] },
-          { name: 'Type', values: ['Process'] },
-          { name: 'Name', values: [name] },
-        ])
-        .findOne(),
+    const processId = await retryWithDelay(
+      async () => {
+        const res = await getArweave(gateway)
+          .api
+          .post('/graphql', {
+            query: AOS_QUERY,
+            variables: { owners: [owner], names: [name] },
+          })
+        if (!res.ok || res?.data?.data === null) {
+          throw new Error(`(${res.status}) ${res.statusText} - GraphQL ERROR`)
+        }
+        return res?.data?.data?.transactions?.edges?.[0]?.node?.id
+      },
       retry?.count,
       retry?.delay,
     )
 
-    return tx?.id
+    return processId
   }
 
   #validateCron(cron: string) {

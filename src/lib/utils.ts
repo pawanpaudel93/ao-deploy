@@ -4,7 +4,6 @@ import { writeFile } from 'node:fs/promises'
 import { existsSync, mkdirSync, rmSync } from 'node:fs'
 import { URL } from 'node:url'
 import Arweave from 'arweave'
-import Ardb from 'ardb'
 
 export const APP_NAME = 'ao-deploy'
 
@@ -46,16 +45,6 @@ export function getArweave(gateway: string) {
   catch {
     return arweave
   }
-}
-
-export const ardb: Ardb = new ((Ardb as any)?.default ?? Ardb)(arweave)
-
-export function getArdb(gateway: string) {
-  try {
-    const arweave = getArweave(gateway)
-    return (new ((Ardb as any)?.default ?? Ardb)(arweave)) as Ardb
-  }
-  catch { return ardb }
 }
 
 export function isArweaveAddress(address: any): boolean {
@@ -216,3 +205,21 @@ export function isCronPattern(cron: string): boolean {
   const cronRegex = /^\d+-(?:Second|second|Minute|minute|Hour|hour|Day|day|Month|month|Year|year|Block|block)s?$/
   return cronRegex.test(cron)
 }
+
+export const AOS_QUERY = `query ($owners: [String!]!, $names: [String!]!) {
+    transactions(
+      first: 1,
+      owners: $owners,
+      tags: [
+        { name: "Data-Protocol", values: ["ao"] },
+        { name: "Type", values: ["Process"]},
+        { name: "Name", values: $names}
+      ]
+    ) {
+      edges {
+        node {
+          id
+        }
+      }
+    }
+  }`

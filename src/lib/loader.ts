@@ -178,7 +178,7 @@ export class LuaProjectLoader {
       return line.trim()
     }
     else {
-      throw new Error(chalk.red('It requires a *.lua file'))
+      throw new Error(chalk.red('A `*.lua` file is required.'))
     }
   }
 

@@ -1,4 +1,5 @@
 import chalk from 'chalk'
+import { APP_NAME } from './utils'
 
 export class Logger {
   static #instances: Map<string, Logger> = new Map()
@@ -49,3 +50,5 @@ export class Logger {
     this.#getInstance(name).error(message, prefixNewLine, suffixNewLine)
   }
 }
+
+export const defaultLogger = Logger.init(APP_NAME)

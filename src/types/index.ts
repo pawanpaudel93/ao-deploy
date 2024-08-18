@@ -4,34 +4,65 @@ export type ConfigName = string
 
 export interface Tag { name: string, value: string }
 
+export interface Services {
+  /**
+   * The URL of the desired Gateway.
+   * @default "https://arweave.net"
+   */
+  gatewayUrl?: string
+
+  /**
+   * The URL of the desired AO Compute Unit.
+   * @default "https://cu.ao-testnet.xyz"
+   */
+  cuUrl?: string
+
+  /**
+   * The URL of the desired AO Messenger Unit.
+   * @default "https://mu.ao-testnet.xyz"
+   */
+  muUrl?: string
+}
+
 export interface DeployConfig {
   /**
    * Process name to spawn
    * @default "default"
    */
   name?: string
+
+  /**
+   * Config name used for logging
+   */
+  configName?: string
+
   /**
    * Path to contract main file
    */
   contractPath: string
+
   /**
    * The module source to use to spin up Process
    * @default "Fetches from `https://raw.githubusercontent.com/pawanpaudel93/ao-deploy-config/main/config.json`"
    */
   module?: string
+
   /**
    * Scheduler to use for Process
    * @default "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA"
    */
   scheduler?: string
+
   /**
    * Additional tags to use for spawning Process
    */
   tags?: Tag[]
+
   /**
    * Cron interval to use for Process i.e (1-minute, 5-minutes)
    */
   cron?: string
+
   /**
    * Wallet path or JWK itself
    */
@@ -41,11 +72,6 @@ export interface DeployConfig {
    * lua path to find the lua modules
    */
   luaPath?: string
-
-  /**
-   * Config name used for logging
-   */
-  configName?: string
 
   /**
    * Retry options
@@ -62,22 +88,27 @@ export interface DeployConfig {
      */
     delay?: number
   }
-  /**
-   * Concurrency limit to deploy multiple processes
-   */
-  concurrency?: number
+
   /**
    * Process Id of an existing process
    */
   processId?: string
+
   /**
    * Output directory of bundle
    */
   outDir?: string
+
   /**
    * Use sqlite aos module when spawning new process
+   * @default false
    */
   sqlite?: boolean
+
+  /**
+   * Configuration for various AO services
+   */
+  services?: Services
 }
 
 export type Config = Record<ConfigName, DeployConfig>
@@ -110,4 +141,5 @@ export interface AosConfig {
   module: string
   sqliteModule: string
   scheduler: string
+  authority: string
 }

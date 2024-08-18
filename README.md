@@ -68,6 +68,9 @@ Options:
   -p, --process-id [processId]  Specify process Id of existing process.
   --build-only                  Bundle the contract into a single file and store it in the process-dist directory.
   --out-dir [outDir]            Used with --build-only to output the single bundle contract file to a specified directory.
+  --gateway-url [url]           Custom Gateway URL to connect to. (default: "https://arweave.net")
+  --cu-url [url]                Custom Compute Unit (CU) URL to connect to. (default: "https://cu.ao-testnet.xyz")
+  --mu-url [url]                Custom Messenger Unit (MU) URL to connect to. (default: "https://mu.ao-testnet.xyz")
   --concurrency [limit]         Concurrency limit for deploying multiple processes. (default: 5)
   --sqlite                      Use sqlite aos module when spawning new process.
   --retry-count [count]         Number of retries for deploying contract. (default: 10)

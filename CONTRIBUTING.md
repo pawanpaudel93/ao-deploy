@@ -35,7 +35,7 @@ Thank you for considering contributing to ao-deploy! We welcome contributions fr
 
 1. **Code style**:
 
-   - Follow the coding style and guidelines as configured in our ESLint setup. We use `@antfu/eslint-config` for ESLint configuration.
+   - Follow the coding style and guidelines as configured in our ESLint setup.
    - Ensure code formatting using ESLint. We have `lint-staged` configured to run `eslint --fix` on staged files before committing.
 
 2. **Documentation**: Update documentation as necessary to reflect your changes.

@@ -6,14 +6,14 @@
  * https://github.com/permaweb/aos/blob/main/LICENSE
  */
 
+import chalk from "chalk";
 import { exec } from "node:child_process";
 import { constants, promises as fs } from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import util from "node:util";
-// @ts-expect-error types missing
-import chalk from "chalk";
 import pLimit from "p-limit";
+// @ts-expect-error types missing
 import createFileTree from "pretty-file-tree";
 import type { BundleResult, BundlingConfig, Module } from "../types";
 import { Logger } from "./logger";

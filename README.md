@@ -90,33 +90,33 @@ Here is an example using a deployment configuration:
 
 ```ts
 // aod.config.ts
-import { defineConfig } from 'ao-deploy'
+import { defineConfig } from "ao-deploy";
 
-const wallet = 'wallet.json'
-const luaPath = './?.lua;./src/?.lua'
+const wallet = "wallet.json";
+const luaPath = "./?.lua;./src/?.lua";
 
 const config = defineConfig({
   contract_1: {
     luaPath,
     name: `contract-1`,
-    contractPath: 'contract-1.lua',
-    wallet,
+    contractPath: "contract-1.lua",
+    wallet
   },
   contract_2: {
     luaPath,
     name: `contract-2`,
-    contractPath: 'contract-2.lua',
-    wallet,
+    contractPath: "contract-2.lua",
+    wallet
   },
   contract_3: {
     luaPath,
     name: `contract-3`,
-    contractPath: 'contract-3.lua',
-    wallet,
+    contractPath: "contract-3.lua",
+    wallet
   }
-})
+});
 
-export default config
+export default config;
 ```
 
 Deploy all specified contracts:
@@ -156,32 +156,32 @@ Here is an example using a deployment configuration:
 
 ```ts
 // aod.config.ts
-import { defineConfig } from 'ao-deploy'
+import { defineConfig } from "ao-deploy";
 
-const luaPath = './?.lua;./src/?.lua'
+const luaPath = "./?.lua;./src/?.lua";
 
 const config = defineConfig({
   contract_1: {
     luaPath,
     name: `contract-1`,
-    contractPath: 'contract-1.lua',
-    outDir: './dist',
+    contractPath: "contract-1.lua",
+    outDir: "./dist"
   },
   contract_2: {
     luaPath,
     name: `contract-2`,
-    contractPath: 'contract-2.lua',
-    outDir: './dist',
+    contractPath: "contract-2.lua",
+    outDir: "./dist"
   },
   contract_3: {
     luaPath,
     name: `contract-3`,
-    contractPath: 'contract-3.lua',
-    outDir: './dist',
+    contractPath: "contract-3.lua",
+    outDir: "./dist"
   }
-})
+});
 
-export default config
+export default config;
 ```
 
 Build all specified contracts:
@@ -197,7 +197,7 @@ ao-deploy aod.config.ts --build=contract_1,contract_3 --build-only
 ```
 
 > [!Note]
-A wallet is generated and saved if not passed.
+> A wallet is generated and saved if not passed.
 
 Retrieve the generated wallet path:
 
@@ -212,32 +212,33 @@ To deploy a contract, you need to import and call the `deployContract` function 
 #### Example: deployContract
 
 ```ts
-import { deployContract } from 'ao-deploy'
+import { deployContract } from "ao-deploy";
 
 async function main() {
   try {
-    const { messageId, processId } = await deployContract(
-      {
-        name: 'demo',
-        wallet: 'wallet.json',
-        contractPath: 'process.lua',
-        tags: [{ name: 'Custom', value: 'Tag' }],
-        retry: {
-          count: 10,
-          delay: 3000,
-        },
-      },
-    )
-    const processUrl = `https://ao_marton.g8way.io/#/process/${processId}`
-    const messageUrl = `${processUrl}/${messageId}`
-    console.log(`\nDeployed Process: ${processUrl} \nDeployment Message: ${messageUrl}`)
-  }
-  catch (error: any) {
-    console.log(`Deployment failed!: ${error?.message ?? 'Failed to deploy contract!'}\n`)
+    const { messageId, processId } = await deployContract({
+      name: "demo",
+      wallet: "wallet.json",
+      contractPath: "process.lua",
+      tags: [{ name: "Custom", value: "Tag" }],
+      retry: {
+        count: 10,
+        delay: 3000
+      }
+    });
+    const processUrl = `https://ao_marton.g8way.io/#/process/${processId}`;
+    const messageUrl = `${processUrl}/${messageId}`;
+    console.log(
+      `\nDeployed Process: ${processUrl} \nDeployment Message: ${messageUrl}`
+    );
+  } catch (error: any) {
+    console.log(
+      `Deployment failed!: ${error?.message ?? "Failed to deploy contract!"}\n`
+    );
   }
 }
 
-main()
+main();
 ```
 
 ##### Parameters
@@ -260,53 +261,55 @@ The `deployContract` function accepts the following parameters within the Deploy
 To deploy contracts, you need to import and call the `deployContracts` function from your script. Here is a basic example:
 
 ```ts
-import { deployContracts } from 'ao-deploy'
+import { deployContracts } from "ao-deploy";
 
 async function main() {
   try {
     const results = await deployContracts(
       [
         {
-          name: 'demo1',
-          wallet: 'wallet.json',
-          contractPath: 'process1.lua',
-          tags: [{ name: 'Custom', value: 'Tag' }],
+          name: "demo1",
+          wallet: "wallet.json",
+          contractPath: "process1.lua",
+          tags: [{ name: "Custom", value: "Tag" }],
           retry: {
             count: 10,
-            delay: 3000,
-          },
+            delay: 3000
+          }
         },
         {
-          name: 'demo2',
-          wallet: 'wallet.json',
-          contractPath: 'process2.lua',
-          tags: [{ name: 'Custom', value: 'Tag' }],
+          name: "demo2",
+          wallet: "wallet.json",
+          contractPath: "process2.lua",
+          tags: [{ name: "Custom", value: "Tag" }],
           retry: {
             count: 10,
-            delay: 3000,
-          },
+            delay: 3000
+          }
         }
       ],
       2
-    )
+    );
     results.forEach((result, idx) => {
-      if (result.status === 'fulfilled') {
-        const { processId, messageId } = result.value
-        const processUrl = `https://ao_marton.g8way.io/#/process/${processId}`
-        const messageUrl = `${processUrl}/${messageId}`
-        console.log(`\nDeployed Process: ${processUrl} \nDeployment Message: ${messageUrl}`)
+      if (result.status === "fulfilled") {
+        const { processId, messageId } = result.value;
+        const processUrl = `https://ao_marton.g8way.io/#/process/${processId}`;
+        const messageUrl = `${processUrl}/${messageId}`;
+        console.log(
+          `\nDeployed Process: ${processUrl} \nDeployment Message: ${messageUrl}`
+        );
+      } else {
+        console.log(`Failed to deploy contract!: ${result.reason}\n`);
       }
-      else {
-        console.log(`Failed to deploy contract!: ${result.reason}\n`)
-      }
-    })
-  }
-  catch (error: any) {
-    console.log(`Deployment failed!: ${error?.message ?? 'Failed to deploy contract!'}\n`)
+    });
+  } catch (error: any) {
+    console.log(
+      `Deployment failed!: ${error?.message ?? "Failed to deploy contract!"}\n`
+    );
   }
 }
 
-main()
+main();
 ```
 
 ## Author

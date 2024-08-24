@@ -50,7 +50,9 @@
     "test": "vitest",
     "typecheck": "tsc --noEmit",
     "prepare": "simple-git-hooks",
-    "prepack": "pnpm build"
+    "prepack": "pnpm build",
+    "fmt": "prettier --write .",
+    "fmt:check": "prettier --check ."
   },
   "dependencies": {
     "@permaweb/aoconnect": "^0.0.58",
@@ -62,19 +64,22 @@
     "pretty-file-tree": "^1.0.1"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^2.24.1",
-    "@antfu/ni": "^0.21.12",
-    "@antfu/utils": "^0.7.7",
+    "@eslint/js": "^9.9.0",
     "@types/node": "^20.12.8",
     "bumpp": "^9.4.1",
     "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.2.1",
     "esno": "^4.7.0",
+    "globals": "^15.9.0",
     "lint-staged": "^15.2.2",
     "pnpm": "^8.15.8",
+    "prettier": "^3.3.3",
     "rimraf": "^5.0.5",
     "simple-git-hooks": "^2.11.1",
     "tsx": "^4.16.5",
     "typescript": "^5.4.5",
+    "typescript-eslint": "^8.1.0",
     "unbuild": "^2.0.0",
     "vite": "^5.2.11",
     "vitest": "^1.6.0"
@@ -83,6 +88,6 @@
     "pre-commit": "pnpm lint-staged"
   },
   "lint-staged": {
-    "*": "eslint --fix"
+    "*": "eslint . --fix"
   }
 }

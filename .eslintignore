@@ -1,0 +1,9 @@
+node_modules/**
+package.json
+pnpm-lock.yaml
+.vscode
+.prettierrc
+.eslintrc
+.husky
+dist/
+*.md

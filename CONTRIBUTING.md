@@ -16,26 +16,27 @@ Thank you for considering contributing to ao-deploy! We welcome contributions fr
 2. **Create a branch**: Make sure to create a new branch for your changes. Use a descriptive name for your branch (e.g., `fix-typo`, `add-new-feature`).
 3. **Install dependencies**: Use `pnpm` to install dependencies.
 
-    ```bash
-    pnpm install
-    ```
+   ```bash
+   pnpm install
+   ```
 
 4. **Make changes**: Implement your changes in your branch.
 5. **Test your changes**: Ensure that your changes do not break any existing functionality.
 
 6. **Lint your code**: Ensure your code follows the project's coding standards.
 
-    ```bash
-    pnpm lint
-    ```
+   ```bash
+   pnpm lint
+   ```
 
 7. **Submit a pull request**: Push your changes to your forked repository and open a pull request to the main repository. Provide a clear description of the changes and why they are needed.
 
 ### Development Guidelines
 
 1. **Code style**:
-    - Follow the coding style and guidelines as configured in our ESLint setup. We use `@antfu/eslint-config` for ESLint configuration.
-    - Ensure code formatting using ESLint. We have `lint-staged` configured to run `eslint --fix` on staged files before committing.
+
+   - Follow the coding style and guidelines as configured in our ESLint setup. We use `@antfu/eslint-config` for ESLint configuration.
+   - Ensure code formatting using ESLint. We have `lint-staged` configured to run `eslint --fix` on staged files before committing.
 
 2. **Documentation**: Update documentation as necessary to reflect your changes.
 3. **Commit messages**: Write clear and concise commit messages that explain the purpose of the changes.
@@ -44,45 +45,45 @@ Thank you for considering contributing to ao-deploy! We welcome contributions fr
 
 - **Build**: Build the project using `unbuild`.
 
-    ```bash
-    pnpm build
-    ```
+  ```bash
+  pnpm build
+  ```
 
 - **Dev**: Start the development server.
 
-    ```bash
-    pnpm dev
-    ```
+  ```bash
+  pnpm dev
+  ```
 
 - **Lint**: Lint the project using ESLint.
 
-    ```bash
-    pnpm lint
-    ```
+  ```bash
+  pnpm lint
+  ```
 
 - **Test**: Run tests using Vitest.
 
-    ```bash
-    pnpm test
-    ```
+  ```bash
+  pnpm test
+  ```
 
 - **Typecheck**: Check TypeScript types.
 
-    ```bash
-    pnpm typecheck
-    ```
+  ```bash
+  pnpm typecheck
+  ```
 
 - **Release**: Bump version and publish.
 
-    ```bash
-    pnpm release
-    ```
+  ```bash
+  pnpm release
+  ```
 
 - **Prepare**: Prepare git hooks using `simple-git-hooks`.
 
-    ```bash
-    pnpm prepare
-    ```
+  ```bash
+  pnpm prepare
+  ```
 
 ## Need Help?
 

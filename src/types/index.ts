@@ -123,6 +123,13 @@ export interface DeployConfig {
    * Custom function to transform contract code before deployment
    * @param source Raw contract source code
    * @returns Transformed source code
+   * @example
+   * ```ts
+   * contractTransformer: (source) => {
+   *   // Example: Remove all comments from the source code
+   *   return source.replace(/\s*--.*\n/g, "");
+   * }
+   * ```
    */
   contractTransformer?: (source: string) => string | Promise<string>;
 }

@@ -220,11 +220,11 @@ export class LuaProjectLoader {
       }
 
       if (
-        config.sourceTransformer &&
-        typeof config.sourceTransformer === "function"
+        config.contractTransformer &&
+        typeof config.contractTransformer === "function"
       ) {
         this.#logger.log("Transforming contract...", false, false);
-        contractSrc = await config.sourceTransformer(contractSrc);
+        contractSrc = await config.contractTransformer(contractSrc);
       }
 
       await writeFileToProjectDir(contractSrc, config.outDir, config.name);
@@ -244,7 +244,7 @@ export class LuaProjectLoader {
     }
   }
 
-  async minifyContract(source: string) {
+  async minifyContract(source: string): Promise<string> {
     return minifyLuaCode(source);
   }
 }

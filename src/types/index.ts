@@ -120,11 +120,11 @@ export interface DeployConfig {
   minify?: boolean;
 
   /**
-   * Custom function to transform source code before deployment
+   * Custom function to transform contract code before deployment
    * @param source Raw contract source code
    * @returns Transformed source code
    */
-  sourceTransformer?: (source: string) => Promise<string>;
+  contractTransformer?: (source: string) => string | Promise<string>;
 }
 
 export type Config = Record<ConfigName, DeployConfig>;
@@ -150,7 +150,7 @@ export interface BundlingConfig {
   outDir: string;
   luaPath?: string;
   minify?: boolean;
-  sourceTransformer?: (source: string) => Promise<string>;
+  contractTransformer?: (source: string) => string | Promise<string>;
 }
 
 export interface Module {

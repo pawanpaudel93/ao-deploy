@@ -47,7 +47,7 @@ bun add ao-deploy --dev
 
 ### Optional Dependencies
 
-If you plan to use the `--minify` option, you'll need to install `lua-format`:
+If you plan to use the `--minify` option, you'll need to install [lua-format](https://github.com/Herrtt/luamin.js):
 
 ```sh
 npm install lua-format --save-dev   # npm
@@ -133,8 +133,9 @@ const config = defineConfig({
     contractPath: "contract-2.lua",
     wallet,
     // Custom source transformer function
-    sourceTransformer: (source) => {
-      return source.replace(/print\(/g, "print(");
+    contractTransformer: (source) => {
+      // Example: Remove all comments from the source code
+      return source.replace(/\s*--.*\n/g, "");
     }
   },
   contract_3: {
@@ -285,7 +286,7 @@ The `deployContract` function accepts the following parameters within the Deploy
 - `luaPath` (optional): The path to the Lua modules seperated by semicolon.
 - `processId` (optional): The process id of existing process.
 - `minify` (optional): Reduce the size of the contract before deployment.
-- `sourceTransformer` (optional): Custom function to transform source code before deployment.
+- `contractTransformer` (optional): Custom function to transform source code before deployment.
 
 #### Example: deployContracts
 

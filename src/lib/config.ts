@@ -204,11 +204,11 @@ export class ConfigManager {
       }
 
       if (
-        deployConfig.sourceTransformer &&
-        typeof deployConfig.sourceTransformer !== "function"
+        deployConfig.contractTransformer &&
+        typeof deployConfig.contractTransformer !== "function"
       ) {
         throw new Error(
-          `Invalid sourceTransformer value in configuration for "${name}": ${jsonStringify(deployConfig.sourceTransformer)}`
+          `Invalid contractTransformer value in configuration for "${name}": ${jsonStringify(deployConfig.contractTransformer)}`
         );
       }
 

@@ -266,7 +266,8 @@ async function buildHandler() {
         contractPath: config.contractPath,
         outDir: config.outDir || "./process-dist",
         luaPath: config.luaPath,
-        minify: config.minify
+        minify: config.minify,
+        contractTransformer: config.contractTransformer
       }));
       const results = await loadAndBundleContracts(
         bundlingConfigs,

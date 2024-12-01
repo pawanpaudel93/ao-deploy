@@ -131,7 +131,7 @@ export class DeploymentsManager {
     sqlite,
     services,
     minify,
-    sourceTransformer
+    contractTransformer
   }: DeployConfig): Promise<DeployResult> {
     name = name || "default";
     configName = configName || name;
@@ -207,9 +207,9 @@ export class DeploymentsManager {
       contractSrc = await loader.minifyContract(contractSrc);
     }
 
-    if (sourceTransformer && typeof sourceTransformer === "function") {
+    if (contractTransformer && typeof contractTransformer === "function") {
       logger.log("Transforming contract...", false, false);
-      contractSrc = await sourceTransformer(contractSrc);
+      contractSrc = await contractTransformer(contractSrc);
     }
 
     logger.log(`Deploying: ${contractPath}`, false, true);

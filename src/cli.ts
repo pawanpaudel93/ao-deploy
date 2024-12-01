@@ -7,17 +7,12 @@ import path from "node:path";
 import process, { emitWarning } from "node:process";
 import { fileURLToPath } from "node:url";
 import { ConfigManager } from "./lib/config";
+import { aoExplorerUrl } from "./lib/constants";
 import { deployContract, deployContracts } from "./lib/deploy";
 import { BuildError, DeployError } from "./lib/error";
 import { loadAndBundleContracts } from "./lib/loader";
 import { Logger } from "./lib/logger";
-import {
-  aoExplorerUrl,
-  clearBuildOutDir,
-  isLuaFile,
-  parseToInt,
-  parseUrl
-} from "./lib/utils";
+import { clearBuildOutDir, isLuaFile, parseToInt, parseUrl } from "./lib/utils";
 import type { BundleResult, DeployResult, Tag } from "./types";
 
 const PKG_ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "../");

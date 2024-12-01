@@ -1,12 +1,10 @@
 import * as aoconnect from "@permaweb/aoconnect";
 import pLimit from "p-limit";
 import type { AosConfig, DeployConfig, DeployResult, Services } from "../types";
+import { AOS_QUERY, APP_NAME, defaultServices } from "./constants";
 import { LuaProjectLoader } from "./loader";
 import { Logger } from "./logger";
 import {
-  AOS_QUERY,
-  APP_NAME,
-  defaultServices,
   getArweave,
   isArweaveAddress,
   isCronPattern,

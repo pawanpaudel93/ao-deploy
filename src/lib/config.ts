@@ -204,7 +204,7 @@ export class ConfigManager {
       }
 
       if (
-        deployConfig.contractTransformer &&
+        deployConfig.contractTransformer !== undefined &&
         typeof deployConfig.contractTransformer !== "function"
       ) {
         throw new Error(

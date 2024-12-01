@@ -15,8 +15,11 @@ A package for deploying AO contracts.
 - Support for deployment configuration.
 - Flexible concurrency and retry options for reliable deployments.
 - CLI and API interfaces for versatile usage.
+- Minify or modify the contract before deployment.
 
 ## Installation
+
+### Basic Installation
 
 ### Using npm
 
@@ -40,6 +43,17 @@ yarn add ao-deploy --dev
 
 ```sh
 bun add ao-deploy --dev
+```
+
+### Optional Dependencies
+
+If you plan to use the `--minify` option, you'll need to install `lua-format`:
+
+```sh
+npm install lua-format --save-dev   # npm
+pnpm add lua-format --save-dev      # pnpm
+yarn add lua-format --dev           # yarn
+bun add lua-format --dev           # bun
 ```
 
 ## Usage
@@ -75,6 +89,7 @@ Options:
   --sqlite                      Use sqlite aos module when spawning new process.
   --retry-count [count]         Number of retries for deploying contract. (default: 10)
   --retry-delay [delay]         Delay between retries in milliseconds. (default: 3000)
+  --minify                      Reduce the size of the contract before deployment. (default: false)
   -h, --help                    display help for command
 ```
 
@@ -82,6 +97,15 @@ Options:
 
 ```sh
 ao-deploy process.lua -n tictactoe -w wallet.json --tags name1:value1 name2:value2
+```
+
+### Example: Deploy contract with minify
+
+> [!Note]
+> Make sure to install `lua-format` as mentioned in [Optional Dependencies](#optional-dependencies) section.
+
+```sh
+ao-deploy process.lua -n tictactoe -w wallet.json --tags name1:value1 name2:value2 --minify
 ```
 
 #### Example: Deploy contracts with configuration
@@ -100,13 +124,18 @@ const config = defineConfig({
     luaPath,
     name: `contract-1`,
     contractPath: "contract-1.lua",
-    wallet
+    wallet,
+    minify: true // Minify the contract before deployment
   },
   contract_2: {
     luaPath,
     name: `contract-2`,
     contractPath: "contract-2.lua",
-    wallet
+    wallet,
+    // Custom source transformer function
+    sourceTransformer: (source) => {
+      return source.replace(/print\(/g, "print(");
+    }
   },
   contract_3: {
     luaPath,
@@ -255,6 +284,8 @@ The `deployContract` function accepts the following parameters within the Deploy
 - `retry` (optional): Retry options with `count` and `delay` properties. By default, it will retry up to `10` times with a `3000` milliseconds delay between attempts.
 - `luaPath` (optional): The path to the Lua modules seperated by semicolon.
 - `processId` (optional): The process id of existing process.
+- `minify` (optional): Reduce the size of the contract before deployment.
+- `sourceTransformer` (optional): Custom function to transform source code before deployment.
 
 #### Example: deployContracts
 

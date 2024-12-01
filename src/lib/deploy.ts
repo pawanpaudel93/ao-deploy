@@ -10,8 +10,8 @@ import {
   isCronPattern,
   isUrl,
   parseToInt,
-  retryWithDelay,
-  sleep
+  pollForProcessSpawn,
+  retryWithDelay
 } from "./utils";
 import { Wallet } from "./wallet";
 
@@ -194,7 +194,8 @@ export class DeploymentsManager {
         retry.count,
         retry.delay
       );
-      await sleep(1000);
+
+      await pollForProcessSpawn({ processId });
     } else {
       logger.log("Updating existing process...", false, true);
     }
@@ -202,14 +203,14 @@ export class DeploymentsManager {
     const loader = new LuaProjectLoader(configName, luaPath);
     let contractSrc = await loader.loadContract(contractPath);
 
-    if (minify) {
-      logger.log("Minifying contract...", false, false);
-      contractSrc = await loader.minifyContract(contractSrc);
-    }
-
     if (contractTransformer && typeof contractTransformer === "function") {
       logger.log("Transforming contract...", false, false);
       contractSrc = await contractTransformer(contractSrc);
+    }
+
+    if (minify) {
+      logger.log("Minifying contract...", false, false);
+      contractSrc = await loader.minifyContract(contractSrc);
     }
 
     logger.log(`Deploying: ${contractPath}`, false, true);

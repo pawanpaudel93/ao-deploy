@@ -25,3 +25,13 @@ export const AOS_QUERY = `query ($owners: [String!]!, $names: [String!]!) {
       }
     }
   }`;
+
+export const TRANSACTION_QUERY = `query ($ids: [ID!]!) {
+  transactions(ids: $ids) {
+    edges {
+      node {
+        id
+      }
+    }
+  }
+}`;

@@ -214,17 +214,17 @@ export class LuaProjectLoader {
     try {
       let contractSrc = await this.loadContract(config.contractPath);
 
-      if (config.minify) {
-        this.#logger.log("Minifying contract...", false, false);
-        contractSrc = await this.minifyContract(contractSrc);
-      }
-
       if (
         config.contractTransformer &&
         typeof config.contractTransformer === "function"
       ) {
         this.#logger.log("Transforming contract...", false, false);
         contractSrc = await config.contractTransformer(contractSrc);
+      }
+
+      if (config.minify) {
+        this.#logger.log("Minifying contract...", false, false);
+        contractSrc = await this.minifyContract(contractSrc);
       }
 
       await writeFileToProjectDir(contractSrc, config.outDir, config.name);

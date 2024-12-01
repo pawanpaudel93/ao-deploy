@@ -226,8 +226,8 @@ async function main() {
         delay: 3000
       }
     });
-    const processUrl = `https://ao_marton.g8way.io/#/process/${processId}`;
-    const messageUrl = `${processUrl}/${messageId}`;
+    const processUrl = `https://www.ao.link/#/entity/${processId}`;
+    const messageUrl = `https://www.ao.link/#/message/${messageId}`;
     console.log(
       `\nDeployed Process: ${processUrl} \nDeployment Message: ${messageUrl}`
     );
@@ -293,8 +293,8 @@ async function main() {
     results.forEach((result, idx) => {
       if (result.status === "fulfilled") {
         const { processId, messageId } = result.value;
-        const processUrl = `https://ao_marton.g8way.io/#/process/${processId}`;
-        const messageUrl = `${processUrl}/${messageId}`;
+        const processUrl = `https://www.ao.link/#/entity/${processId}`;
+        const messageUrl = `https://www.ao.link/#/message/${messageId}`;
         console.log(
           `\nDeployed Process: ${processUrl} \nDeployment Message: ${messageUrl}`
         );

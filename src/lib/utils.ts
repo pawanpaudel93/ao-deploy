@@ -192,6 +192,8 @@ export const defaultServices = {
   muUrl: "https://mu.ao-testnet.xyz"
 };
 
+export const aoExplorerUrl = "https://www.ao.link";
+
 export function jsonStringify(value?: any): string {
   try {
     return JSON.stringify(value, null, 2);
@@ -215,6 +217,42 @@ export function isCronPattern(cron: string): boolean {
     /^\d+-(?:Second|second|Minute|minute|Hour|hour|Day|day|Month|month|Year|year|Block|block)s?$/;
   return cronRegex.test(cron);
 }
+
+export type PackageManager = "npm" | "pnpm" | "yarn" | "bun";
+
+export const getUserPkgManager: () => PackageManager = () => {
+  // Check for npm/pnpm/yarn/bun executable path
+  const userAgent = process.env.npm_config_user_agent;
+  const execPath = process.env.npm_execpath || "";
+
+  if (execPath.includes("pnpm")) {
+    return "pnpm";
+  }
+
+  if (execPath.includes("yarn")) {
+    return "yarn";
+  }
+
+  if (execPath.includes("bun")) {
+    return "bun";
+  }
+
+  // Fallback to user agent check
+  if (userAgent) {
+    if (userAgent.startsWith("yarn")) {
+      return "yarn";
+    } else if (userAgent.startsWith("pnpm")) {
+      return "pnpm";
+    } else if (userAgent.startsWith("bun")) {
+      return "bun";
+    } else if (userAgent.startsWith("npm")) {
+      return "npm";
+    }
+  }
+
+  // Default to npm if nothing else is detected
+  return "npm";
+};
 
 export const AOS_QUERY = `query ($owners: [String!]!, $names: [String!]!) {
     transactions(

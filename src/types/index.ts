@@ -112,6 +112,19 @@ export interface DeployConfig {
    * Configuration for various AO services
    */
   services?: Services;
+
+  /**
+   * Minify the contract before deployment
+   * @default false
+   */
+  minify?: boolean;
+
+  /**
+   * Custom function to transform source code before deployment
+   * @param source Raw contract source code
+   * @returns Transformed source code
+   */
+  sourceTransformer?: (source: string) => Promise<string>;
 }
 
 export type Config = Record<ConfigName, DeployConfig>;
@@ -136,6 +149,8 @@ export interface BundlingConfig {
   contractPath: string;
   outDir: string;
   luaPath?: string;
+  minify?: boolean;
+  sourceTransformer?: (source: string) => Promise<string>;
 }
 
 export interface Module {

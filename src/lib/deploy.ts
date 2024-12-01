@@ -1,8 +1,8 @@
 import * as aoconnect from "@permaweb/aoconnect";
 import pLimit from "p-limit";
 import type { AosConfig, DeployConfig, DeployResult, Services } from "../types";
-import { Wallet } from "./wallet";
 import { LuaProjectLoader } from "./loader";
+import { Logger } from "./logger";
 import {
   AOS_QUERY,
   APP_NAME,
@@ -15,7 +15,7 @@ import {
   retryWithDelay,
   sleep
 } from "./utils";
-import { Logger } from "./logger";
+import { Wallet } from "./wallet";
 
 /**
  * Manages deployments of contracts to AO.
@@ -131,7 +131,9 @@ export class DeploymentsManager {
     configName,
     processId,
     sqlite,
-    services
+    services,
+    minify,
+    sourceTransformer
   }: DeployConfig): Promise<DeployResult> {
     name = name || "default";
     configName = configName || name;
@@ -200,7 +202,17 @@ export class DeploymentsManager {
     }
 
     const loader = new LuaProjectLoader(configName, luaPath);
-    const contractSrc = await loader.loadContract(contractPath);
+    let contractSrc = await loader.loadContract(contractPath);
+
+    if (minify) {
+      logger.log("Minifying contract...", false, false);
+      contractSrc = await loader.minifyContract(contractSrc);
+    }
+
+    if (sourceTransformer && typeof sourceTransformer === "function") {
+      logger.log("Transforming contract...", false, false);
+      contractSrc = await sourceTransformer(contractSrc);
+    }
 
     logger.log(`Deploying: ${contractPath}`, false, true);
     // Load contract to process

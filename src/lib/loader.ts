@@ -17,6 +17,7 @@ import pLimit from "p-limit";
 import createFileTree from "pretty-file-tree";
 import type { BundleResult, BundlingConfig, Module } from "../types";
 import { Logger } from "./logger";
+import { minifyLuaCode } from "./minify";
 import { writeFileToProjectDir } from "./utils";
 
 const execAsync = util.promisify(exec);
@@ -211,7 +212,21 @@ export class LuaProjectLoader {
 
   async loadAndBundleContract(config: BundlingConfig): Promise<BundleResult> {
     try {
-      const contractSrc = await this.loadContract(config.contractPath);
+      let contractSrc = await this.loadContract(config.contractPath);
+
+      if (
+        config.contractTransformer &&
+        typeof config.contractTransformer === "function"
+      ) {
+        this.#logger.log("Transforming contract...", false, false);
+        contractSrc = await config.contractTransformer(contractSrc);
+      }
+
+      if (config.minify) {
+        this.#logger.log("Minifying contract...", false, false);
+        contractSrc = await this.minifyContract(contractSrc);
+      }
+
       await writeFileToProjectDir(contractSrc, config.outDir, config.name);
 
       return {
@@ -227,6 +242,10 @@ export class LuaProjectLoader {
         )
       );
     }
+  }
+
+  async minifyContract(source: string): Promise<string> {
+    return minifyLuaCode(source);
   }
 }
 

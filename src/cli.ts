@@ -1,18 +1,19 @@
 #!/usr/bin/env node
 
-import process, { emitWarning } from "node:process";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import fs from "node:fs";
 import chalk from "chalk";
 import { Command } from "commander";
-import { deployContract, deployContracts } from "./lib/deploy";
+import fs from "node:fs";
+import path from "node:path";
+import process, { emitWarning } from "node:process";
+import { fileURLToPath } from "node:url";
 import { ConfigManager } from "./lib/config";
-import type { BundleResult, DeployResult, Tag } from "./types";
-import { Logger } from "./lib/logger";
+import { aoExplorerUrl } from "./lib/constants";
+import { deployContract, deployContracts } from "./lib/deploy";
 import { BuildError, DeployError } from "./lib/error";
 import { loadAndBundleContracts } from "./lib/loader";
+import { Logger } from "./lib/logger";
 import { clearBuildOutDir, isLuaFile, parseToInt, parseUrl } from "./lib/utils";
+import type { BundleResult, DeployResult, Tag } from "./types";
 
 const PKG_ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "../");
 
@@ -41,10 +42,8 @@ function getPackageJson() {
 
 function logDeploymentDetails(result: DeployResult) {
   const { messageId, processId, isNewProcess, configName } = result;
-  const processUrl = chalk.green(
-    `https://ao_marton.g8way.io/#/process/${processId}`
-  );
-  const messageUrl = chalk.green(`${processUrl}/${messageId}`);
+  const processUrl = chalk.green(`${aoExplorerUrl}/#/entity/${processId}`);
+  const messageUrl = chalk.green(`${aoExplorerUrl}/#/message/${messageId}`);
   const logger = Logger.init(configName);
 
   console.log("");
@@ -151,7 +150,8 @@ program
     "Delay between retries in milliseconds.",
     parseToInt,
     3000
-  );
+  )
+  .option("--minify", "Reduce the size of the contract before deployment.");
 
 program.parse(process.argv);
 
@@ -195,7 +195,8 @@ async function deploymentHandler() {
           gatewayUrl: options.gatewayUrl,
           cuUrl: options.cuUrl,
           muUrl: options.muUrl
-        }
+        },
+        minify: options.minify
       });
       logDeploymentDetails(result);
     } else {
@@ -242,7 +243,8 @@ async function buildHandler() {
             contractPath: contractOrConfigPath,
             name,
             outDir,
-            luaPath: options.luaPath
+            luaPath: options.luaPath,
+            minify: options.minify
           }
         ],
         1
@@ -263,7 +265,9 @@ async function buildHandler() {
         name: config.name || "bundle",
         contractPath: config.contractPath,
         outDir: config.outDir || "./process-dist",
-        luaPath: config.luaPath
+        luaPath: config.luaPath,
+        minify: config.minify,
+        contractTransformer: config.contractTransformer
       }));
       const results = await loadAndBundleContracts(
         bundlingConfigs,

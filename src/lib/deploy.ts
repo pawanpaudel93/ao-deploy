@@ -1,21 +1,19 @@
 import * as aoconnect from "@permaweb/aoconnect";
 import pLimit from "p-limit";
 import type { AosConfig, DeployConfig, DeployResult, Services } from "../types";
-import { Wallet } from "./wallet";
+import { AOS_QUERY, APP_NAME, defaultServices } from "./constants";
 import { LuaProjectLoader } from "./loader";
+import { Logger } from "./logger";
 import {
-  AOS_QUERY,
-  APP_NAME,
-  defaultServices,
   getArweave,
   isArweaveAddress,
   isCronPattern,
   isUrl,
   parseToInt,
-  retryWithDelay,
-  sleep
+  pollForProcessSpawn,
+  retryWithDelay
 } from "./utils";
-import { Logger } from "./logger";
+import { Wallet } from "./wallet";
 
 /**
  * Manages deployments of contracts to AO.
@@ -131,7 +129,9 @@ export class DeploymentsManager {
     configName,
     processId,
     sqlite,
-    services
+    services,
+    minify,
+    contractTransformer
   }: DeployConfig): Promise<DeployResult> {
     name = name || "default";
     configName = configName || name;
@@ -194,13 +194,24 @@ export class DeploymentsManager {
         retry.count,
         retry.delay
       );
-      await sleep(1000);
+
+      await pollForProcessSpawn({ processId });
     } else {
       logger.log("Updating existing process...", false, true);
     }
 
     const loader = new LuaProjectLoader(configName, luaPath);
-    const contractSrc = await loader.loadContract(contractPath);
+    let contractSrc = await loader.loadContract(contractPath);
+
+    if (contractTransformer && typeof contractTransformer === "function") {
+      logger.log("Transforming contract...", false, false);
+      contractSrc = await contractTransformer(contractSrc);
+    }
+
+    if (minify) {
+      logger.log("Minifying contract...", false, false);
+      contractSrc = await loader.minifyContract(contractSrc);
+    }
 
     logger.log(`Deploying: ${contractPath}`, false, true);
     // Load contract to process

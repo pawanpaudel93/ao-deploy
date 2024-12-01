@@ -194,6 +194,24 @@ export class ConfigManager {
         );
       }
 
+      if (
+        deployConfig.minify !== undefined &&
+        typeof deployConfig.minify !== "boolean"
+      ) {
+        throw new Error(
+          `Invalid minify value in configuration for "${name}": ${jsonStringify(deployConfig.minify)}`
+        );
+      }
+
+      if (
+        deployConfig.contractTransformer !== undefined &&
+        typeof deployConfig.contractTransformer !== "function"
+      ) {
+        throw new Error(
+          `Invalid contractTransformer value in configuration for "${name}": ${jsonStringify(deployConfig.contractTransformer)}`
+        );
+      }
+
       return true;
     });
   }

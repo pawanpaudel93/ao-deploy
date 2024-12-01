@@ -4,8 +4,7 @@ import { writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { URL } from "node:url";
-
-export const APP_NAME = "ao-deploy";
+import { TRANSACTION_QUERY } from "./constants";
 
 /**
  * Initializes a default Arweave instance.
@@ -62,13 +61,15 @@ export async function sleep(delay: number = 3000) {
  * Retries a given function up to a maximum number of attempts.
  * @param fn - The asynchronous function to retry, which should return a Promise.
  * @param maxAttempts - The maximum number of attempts to make.
- * @param delay - The delay between attempts in milliseconds.
+ * @param initialDelay - The delay between attempts in milliseconds.
+ * @param getDelay - A function that returns the delay for a given attempt.
  * @return A Promise that resolves with the result of the function or rejects after all attempts fail.
  */
 export async function retryWithDelay<T>(
   fn: () => Promise<T>,
   maxAttempts: number = 3,
-  delay: number = 1000
+  initialDelay: number = 1000,
+  getDelay: (attempt: number) => number = () => initialDelay
 ): Promise<T> {
   let attempts = 0;
 
@@ -78,9 +79,10 @@ export async function retryWithDelay<T>(
     } catch (error) {
       attempts += 1;
       if (attempts < maxAttempts) {
+        const currentDelay = getDelay(attempts);
         // console.log(`Attempt ${attempts} failed, retrying...`)
         return new Promise<T>((resolve) =>
-          setTimeout(() => resolve(attempt()), delay)
+          setTimeout(() => resolve(attempt()), currentDelay)
         );
       } else {
         throw error;
@@ -186,12 +188,6 @@ export function parseUrl(
   return value;
 }
 
-export const defaultServices = {
-  gatewayUrl: "https://arweave.net",
-  cuUrl: "https://cu.ao-testnet.xyz",
-  muUrl: "https://mu.ao-testnet.xyz"
-};
-
 export function jsonStringify(value?: any): string {
   try {
     return JSON.stringify(value, null, 2);
@@ -216,20 +212,84 @@ export function isCronPattern(cron: string): boolean {
   return cronRegex.test(cron);
 }
 
-export const AOS_QUERY = `query ($owners: [String!]!, $names: [String!]!) {
-    transactions(
-      first: 1,
-      owners: $owners,
-      tags: [
-        { name: "Data-Protocol", values: ["ao"] },
-        { name: "Type", values: ["Process"]},
-        { name: "Name", values: $names}
-      ]
-    ) {
-      edges {
-        node {
-          id
-        }
-      }
+export type PackageManager = "npm" | "pnpm" | "yarn" | "bun";
+
+export const getUserPkgManager: () => PackageManager = () => {
+  // Check for npm/pnpm/yarn/bun executable path
+  const userAgent = process.env.npm_config_user_agent;
+  const execPath = process.env.npm_execpath || "";
+
+  if (execPath.includes("pnpm")) {
+    return "pnpm";
+  }
+
+  if (execPath.includes("yarn")) {
+    return "yarn";
+  }
+
+  if (execPath.includes("bun")) {
+    return "bun";
+  }
+
+  // Fallback to user agent check
+  if (userAgent) {
+    if (userAgent.startsWith("yarn")) {
+      return "yarn";
+    } else if (userAgent.startsWith("pnpm")) {
+      return "pnpm";
+    } else if (userAgent.startsWith("bun")) {
+      return "bun";
+    } else if (userAgent.startsWith("npm")) {
+      return "npm";
     }
-  }`;
+  }
+
+  // Default to npm if nothing else is detected
+  return "npm";
+};
+
+interface PollingOptions {
+  maxAttempts?: number;
+  initialDelayMs?: number;
+  backoffFactor?: number;
+}
+
+export async function pollForProcessSpawn({
+  processId,
+  options = {}
+}: {
+  processId: string;
+  options?: PollingOptions;
+}): Promise<void> {
+  const {
+    maxAttempts = 10,
+    initialDelayMs = 3000,
+    backoffFactor = 1.5
+  } = options;
+
+  const queryTransaction = async () => {
+    const response = await arweave.api.post("/graphql", {
+      query: TRANSACTION_QUERY,
+      variables: { ids: [processId] }
+    });
+
+    const transaction = response?.data?.data?.transactions?.edges?.[0]?.node;
+    if (!transaction) {
+      throw new Error("Transaction not found");
+    }
+    return transaction;
+  };
+
+  try {
+    await retryWithDelay(
+      queryTransaction,
+      maxAttempts,
+      initialDelayMs,
+      (attempt) => initialDelayMs * Math.pow(backoffFactor, attempt - 1)
+    );
+  } catch {
+    throw new Error(
+      `Failed to find process ${processId} after ${maxAttempts} attempts. The process may still be spawning.`
+    );
+  }
+}

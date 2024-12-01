@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import { APP_NAME } from "./utils";
+import { APP_NAME } from "./constants";
 
 export class Logger {
   static #instances: Map<string, Logger> = new Map();

@@ -90,6 +90,7 @@ Options:
   --retry-count [count]         Number of retries for deploying contract. (default: 10)
   --retry-delay [delay]         Delay between retries in milliseconds. (default: 3000)
   --minify                      Reduce the size of the contract before deployment. (default: false)
+  --on-boot                     Load contract at process startup. (default: false)
   -h, --help                    display help for command
 ```
 
@@ -106,6 +107,12 @@ ao-deploy process.lua -n tictactoe -w wallet.json --tags name1:value1 name2:valu
 
 ```sh
 ao-deploy process.lua -n tictactoe -w wallet.json --tags name1:value1 name2:value2 --minify
+```
+
+#### Example: Deploy contract with on-boot
+
+```sh
+ao-deploy process.lua -n tictactoe -w wallet.json --tags name1:value1 name2:value2 --on-boot
 ```
 
 #### Example: Deploy contracts with configuration

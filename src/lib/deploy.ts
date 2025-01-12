@@ -132,7 +132,8 @@ export class DeploymentsManager {
     services,
     minify,
     contractTransformer,
-    onBoot
+    onBoot,
+    silent = false
   }: DeployConfig): Promise<DeployResult> {
     name = name || "default";
     configName = configName || name;
@@ -141,7 +142,7 @@ export class DeploymentsManager {
       delay: parseToInt(retry?.delay, 3000)
     };
 
-    const logger = new Logger(configName);
+    const logger = new Logger(configName, silent);
     const aosConfig = await this.#getAosConfig();
     module = isArweaveAddress(module)
       ? module!
@@ -169,7 +170,7 @@ export class DeploymentsManager {
 
     const isNewProcess = !processId;
 
-    const loader = new LuaProjectLoader(configName, luaPath);
+    const loader = new LuaProjectLoader(configName, luaPath, silent);
     let contractSrc = await loader.loadContract(contractPath);
 
     if (contractTransformer && typeof contractTransformer === "function") {

@@ -295,7 +295,8 @@ The `deployContract` function accepts the following parameters within the Deploy
 - `processId` (optional): The process id of existing process.
 - `minify` (optional): Reduce the size of the contract before deployment.
 - `contractTransformer` (optional): Custom function to transform source code before deployment.
-- `onBoot` (optional): Load contract when process is spawned.
+- `onBoot` (optional): Load contract when process is spawned. (default: false)
+- `silent` (optional): Disable logging to console. (default: false)
 
 #### Example: deployContracts
 

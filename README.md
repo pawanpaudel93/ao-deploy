@@ -264,10 +264,11 @@ async function main() {
       }
     });
     const processUrl = `https://www.ao.link/#/entity/${processId}`;
-    const messageUrl = `https://www.ao.link/#/message/${messageId}`;
-    console.log(
-      `\nDeployed Process: ${processUrl} \nDeployment Message: ${messageUrl}`
-    );
+    console.log(`Deployed Process: ${processUrl}`);
+    if (messageId) {
+      const messageUrl = `https://www.ao.link/#/message/${messageId}`;
+      console.log(`Deployment Message: ${messageUrl}`);
+    }
   } catch (error: any) {
     console.log(
       `Deployment failed!: ${error?.message ?? "Failed to deploy contract!"}\n`
@@ -294,6 +295,7 @@ The `deployContract` function accepts the following parameters within the Deploy
 - `processId` (optional): The process id of existing process.
 - `minify` (optional): Reduce the size of the contract before deployment.
 - `contractTransformer` (optional): Custom function to transform source code before deployment.
+- `onBoot` (optional): Load contract when process is spawned.
 
 #### Example: deployContracts
 
@@ -333,10 +335,11 @@ async function main() {
       if (result.status === "fulfilled") {
         const { processId, messageId } = result.value;
         const processUrl = `https://www.ao.link/#/entity/${processId}`;
-        const messageUrl = `https://www.ao.link/#/message/${messageId}`;
-        console.log(
-          `\nDeployed Process: ${processUrl} \nDeployment Message: ${messageUrl}`
-        );
+        console.log(`Deployed Process: ${processUrl}`);
+        if (messageId) {
+          const messageUrl = `https://www.ao.link/#/message/${messageId}`;
+          console.log(`Deployment Message: ${messageUrl}`);
+        }
       } else {
         console.log(`Failed to deploy contract!: ${result.reason}\n`);
       }

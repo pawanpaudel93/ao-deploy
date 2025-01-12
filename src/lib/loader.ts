@@ -26,9 +26,9 @@ export class LuaProjectLoader {
   #luaPath: string;
   #logger: Logger;
 
-  constructor(name: string, luaPath?: string) {
+  constructor(name: string, luaPath?: string, silent: boolean = false) {
     this.#luaPath = luaPath || "";
-    this.#logger = Logger.init(name);
+    this.#logger = Logger.init(name, silent);
   }
 
   async #fileExists(path: string): Promise<boolean> {
@@ -193,15 +193,17 @@ export class LuaProjectLoader {
           false,
           true
         );
-        console.log(
-          chalk.dim(
-            createFileTree([
-              ...projectStructure.map((m) => m.path),
-              `${filePath} ${chalk.reset(chalk.bgGreen(" MAIN "))}`
-            ])
-          )
-        );
-        console.log("");
+        if (!this.#logger.silent) {
+          console.log(
+            chalk.dim(
+              createFileTree([
+                ...projectStructure.map((m) => m.path),
+                `${filePath} ${chalk.reset(chalk.bgGreen(" MAIN "))}`
+              ])
+            )
+          );
+          console.log("");
+        }
       }
 
       return line.trim();

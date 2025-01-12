@@ -43,14 +43,15 @@ function getPackageJson() {
 function logDeploymentDetails(result: DeployResult) {
   const { messageId, processId, isNewProcess, configName } = result;
   const processUrl = chalk.green(`${aoExplorerUrl}/#/entity/${processId}`);
-  const messageUrl = chalk.green(`${aoExplorerUrl}/#/message/${messageId}`);
   const logger = Logger.init(configName);
 
-  console.log("");
   if (isNewProcess) {
     logger.log(`Deployed Process: ${processUrl}`);
   }
-  logger.log(`Deployment Message: ${messageUrl}`);
+  if (messageId) {
+    const messageUrl = chalk.green(`${aoExplorerUrl}/#/message/${messageId}`);
+    logger.log(`Deployment Message: ${messageUrl}`);
+  }
 }
 
 function logBundleDetails(result: BundleResult) {
@@ -151,7 +152,8 @@ program
     parseToInt,
     3000
   )
-  .option("--minify", "Reduce the size of the contract before deployment.");
+  .option("--minify", "Reduce the size of the contract before deployment.")
+  .option("--on-boot", "Load contract when process is spawned.");
 
 program.parse(process.argv);
 
@@ -196,7 +198,8 @@ async function deploymentHandler() {
           cuUrl: options.cuUrl,
           muUrl: options.muUrl
         },
-        minify: options.minify
+        minify: options.minify,
+        onBoot: options.onBoot
       });
       logDeploymentDetails(result);
     } else {

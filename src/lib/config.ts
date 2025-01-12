@@ -128,11 +128,17 @@ export class ConfigManager {
       "wallet",
       "outDir"
     ];
+    const optionalBooleanProps: (keyof DeployConfig)[] = [
+      "sqlite",
+      "silent",
+      "minify",
+      "onBoot"
+    ];
 
     optionalAddressProps.forEach((prop) => {
       if (deployConfig[prop] && !isArweaveAddress(deployConfig[prop])) {
         throw new Error(
-          `Invalid optional property "${prop}" in configuration for "${keyName}": ${jsonStringify(deployConfig[prop])}`
+          `Invalid "${prop}" value in configuration for "${keyName}": ${jsonStringify(deployConfig[prop])}`
         );
       }
     });
@@ -140,7 +146,18 @@ export class ConfigManager {
     optionalStringProps.forEach((prop) => {
       if (deployConfig[prop] && !this.#isString(deployConfig[prop])) {
         throw new Error(
-          `Invalid optional property "${prop}" in configuration for "${keyName}": ${jsonStringify(deployConfig[prop])}`
+          `Invalid "${prop}" value in configuration for "${keyName}": ${jsonStringify(deployConfig[prop])}`
+        );
+      }
+    });
+
+    optionalBooleanProps.forEach((prop) => {
+      if (
+        deployConfig[prop] !== undefined &&
+        typeof deployConfig[prop] !== "boolean"
+      ) {
+        throw new Error(
+          `Invalid "${prop}" value in configuration for "${keyName}": ${jsonStringify(deployConfig[prop])}`
         );
       }
     });
@@ -182,24 +199,6 @@ export class ConfigManager {
       if (deployConfig.cron && !isCronPattern(deployConfig.cron)) {
         throw new Error(
           `Invalid cron value in configuration for "${name}": ${jsonStringify(deployConfig.cron)}`
-        );
-      }
-
-      if (
-        deployConfig.sqlite !== undefined &&
-        typeof deployConfig.sqlite !== "boolean"
-      ) {
-        throw new Error(
-          `Invalid sqlite value in configuration for "${name}": ${jsonStringify(deployConfig.sqlite)}`
-        );
-      }
-
-      if (
-        deployConfig.minify !== undefined &&
-        typeof deployConfig.minify !== "boolean"
-      ) {
-        throw new Error(
-          `Invalid minify value in configuration for "${name}": ${jsonStringify(deployConfig.minify)}`
         );
       }
 

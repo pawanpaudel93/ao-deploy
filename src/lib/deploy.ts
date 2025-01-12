@@ -131,7 +131,9 @@ export class DeploymentsManager {
     sqlite,
     services,
     minify,
-    contractTransformer
+    contractTransformer,
+    onBoot,
+    silent = false
   }: DeployConfig): Promise<DeployResult> {
     name = name || "default";
     configName = configName || name;
@@ -140,7 +142,7 @@ export class DeploymentsManager {
       delay: parseToInt(retry?.delay, 3000)
     };
 
-    const logger = new Logger(configName);
+    const logger = new Logger(configName, silent);
     const aosConfig = await this.#getAosConfig();
     module = isArweaveAddress(module)
       ? module!
@@ -168,39 +170,7 @@ export class DeploymentsManager {
 
     const isNewProcess = !processId;
 
-    if (!processId) {
-      logger.log("Spawning new process...", false, true);
-      tags = Array.isArray(tags) ? tags : [];
-      tags = [
-        { name: "App-Name", value: APP_NAME },
-        { name: "Name", value: name },
-        { name: "aos-Version", value: "REPLACE-AO-DEPLOY-VERSION" },
-        { name: "Authority", value: aosConfig.authority },
-        ...tags
-      ];
-
-      if (cron) {
-        this.#validateCron(cron);
-        tags = [
-          ...tags,
-          { name: "Cron-Interval", value: cron },
-          { name: "Cron-Tag-Action", value: "Cron" }
-        ];
-      }
-
-      const data = "1984";
-      processId = await retryWithDelay(
-        () => aoInstance.spawn({ module, signer, tags, data, scheduler }),
-        retry.count,
-        retry.delay
-      );
-
-      await pollForProcessSpawn({ processId });
-    } else {
-      logger.log("Updating existing process...", false, true);
-    }
-
-    const loader = new LuaProjectLoader(configName, luaPath);
+    const loader = new LuaProjectLoader(configName, luaPath, silent);
     let contractSrc = await loader.loadContract(contractPath);
 
     if (contractTransformer && typeof contractTransformer === "function") {
@@ -213,47 +183,98 @@ export class DeploymentsManager {
       contractSrc = await loader.minifyContract(contractSrc);
     }
 
-    logger.log(`Deploying: ${contractPath}`, false, true);
-    // Load contract to process
-    const messageId = await retryWithDelay(
-      async () =>
-        aoInstance.message({
-          process: processId,
-          tags: [{ name: "Action", value: "Eval" }],
-          data: contractSrc,
-          signer
-        }),
-      retry.count,
-      retry.delay
-    );
+    if (isNewProcess) {
+      logger.log("Spawning new process...", false, true);
+      tags = Array.isArray(tags) ? tags : [];
+      tags = [
+        { name: "App-Name", value: APP_NAME },
+        { name: "Name", value: name },
+        { name: "aos-Version", value: "REPLACE-AO-DEPLOY-VERSION" },
+        { name: "Authority", value: aosConfig.authority },
+        ...tags
+      ];
 
-    const { Output, Error: error } = await retryWithDelay(
-      async () =>
-        aoInstance.result({
-          process: processId,
-          message: messageId
-        }),
-      retry.count,
-      retry.delay
-    );
+      if (onBoot) {
+        logger.log(`Deploying: ${contractPath}`, false, true);
+        tags = [...tags, { name: "On-Boot", value: "Data" }];
+      }
 
-    let errorMessage = null;
+      if (cron) {
+        this.#validateCron(cron);
+        tags = [
+          ...tags,
+          { name: "Cron-Interval", value: cron },
+          { name: "Cron-Tag-Action", value: "Cron" }
+        ];
+      }
 
-    if (Output?.data?.output) {
-      errorMessage = Output.data.output;
-    } else if (error) {
-      if (typeof error === "object" && Object.keys(error).length > 0) {
-        errorMessage = JSON.stringify(error);
-      } else {
-        errorMessage = String(error);
+      const data = onBoot ? contractSrc : "1984";
+      processId = await retryWithDelay(
+        () => aoInstance.spawn({ module, signer, tags, data, scheduler }),
+        retry.count,
+        retry.delay
+      );
+
+      await pollForProcessSpawn({ processId });
+
+      if (onBoot) {
+        return { name, processId, isNewProcess, configName };
       }
     }
 
-    if (errorMessage) {
-      throw new Error(errorMessage);
+    let messageId: string;
+    if (!onBoot || !isNewProcess) {
+      if (!isNewProcess) {
+        logger.log("Updating existing process...", false, true);
+      }
+      logger.log(`Deploying: ${contractPath}`, false, true);
+      // Load contract to process
+      messageId = await retryWithDelay(
+        async () =>
+          aoInstance.message({
+            process: processId!,
+            tags: [{ name: "Action", value: "Eval" }],
+            data: contractSrc,
+            signer
+          }),
+        retry.count,
+        retry.delay
+      );
+
+      const { Output, Error: error } = await retryWithDelay(
+        async () =>
+          aoInstance.result({
+            process: processId!,
+            message: messageId
+          }),
+        retry.count,
+        retry.delay
+      );
+
+      let errorMessage = null;
+
+      if (Output?.data?.output) {
+        errorMessage = Output.data.output;
+      } else if (error) {
+        if (typeof error === "object" && Object.keys(error).length > 0) {
+          errorMessage = JSON.stringify(error);
+        } else {
+          errorMessage = String(error);
+        }
+      }
+
+      if (errorMessage) {
+        throw new Error(errorMessage);
+      }
     }
 
-    return { name, processId, messageId, isNewProcess, configName };
+    return {
+      name,
+      processId: processId!,
+      messageId: messageId!,
+      isNewProcess,
+      configName
+    };
   }
 
   /**

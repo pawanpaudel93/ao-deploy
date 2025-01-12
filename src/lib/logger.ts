@@ -11,11 +11,15 @@ export class Logger {
     this.#silent = silent;
   }
 
+  get silent() {
+    return this.#silent;
+  }
+
   static #getInstance(name: string, silent: boolean = false): Logger {
-    if (!Logger.#instances.has(name)) {
-      Logger.#instances.set(name, new Logger(name, silent));
+    if (!Logger.#instances.has(`${name}-${silent}`)) {
+      Logger.#instances.set(`${name}-${silent}`, new Logger(name, silent));
     }
-    return Logger.#instances.get(name)!;
+    return Logger.#instances.get(`${name}-${silent}`)!;
   }
 
   static init(name: string, silent: boolean = false) {

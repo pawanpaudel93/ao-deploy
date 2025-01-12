@@ -193,15 +193,17 @@ export class LuaProjectLoader {
           false,
           true
         );
-        console.log(
-          chalk.dim(
-            createFileTree([
-              ...projectStructure.map((m) => m.path),
-              `${filePath} ${chalk.reset(chalk.bgGreen(" MAIN "))}`
-            ])
-          )
-        );
-        console.log("");
+        if (!this.#logger.silent) {
+          console.log(
+            chalk.dim(
+              createFileTree([
+                ...projectStructure.map((m) => m.path),
+                `${filePath} ${chalk.reset(chalk.bgGreen(" MAIN "))}`
+              ])
+            )
+          );
+          console.log("");
+        }
       }
 
       return line.trim();

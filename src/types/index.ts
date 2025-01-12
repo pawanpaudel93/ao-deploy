@@ -141,6 +141,12 @@ export interface DeployConfig {
    * @default false
    */
   onBoot?: boolean;
+
+  /**
+   * Disable logging to console
+   * @default false
+   */
+  silent?: boolean;
 }
 
 export type Config = Record<ConfigName, DeployConfig>;

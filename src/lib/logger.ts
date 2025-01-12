@@ -4,23 +4,26 @@ import { APP_NAME } from "./constants";
 export class Logger {
   static #instances: Map<string, Logger> = new Map();
   #name: string;
+  #silent: boolean;
 
-  constructor(name: string) {
+  constructor(name: string, silent: boolean = false) {
     this.#name = name;
+    this.#silent = silent;
   }
 
-  static #getInstance(name: string): Logger {
+  static #getInstance(name: string, silent: boolean = false): Logger {
     if (!Logger.#instances.has(name)) {
-      Logger.#instances.set(name, new Logger(name));
+      Logger.#instances.set(name, new Logger(name, silent));
     }
     return Logger.#instances.get(name)!;
   }
 
-  static init(name: string) {
-    return this.#getInstance(name);
+  static init(name: string, silent: boolean = false) {
+    return this.#getInstance(name, silent);
   }
 
   #logMessage(message: string, prefixNewLine: boolean, suffixNewLine: boolean) {
+    if (this.#silent) return;
     const prefix = prefixNewLine ? "\n" : "";
     const suffix = suffixNewLine ? "\n" : "";
     console.log(`${prefix}${message}${suffix}`);
@@ -54,27 +57,38 @@ export class Logger {
     name: string,
     message: string,
     prefixNewLine = false,
-    suffixNewLine = false
+    suffixNewLine = false,
+    silent = false
   ) {
-    this.#getInstance(name).log(message, prefixNewLine, suffixNewLine);
+    this.#getInstance(name, silent).log(message, prefixNewLine, suffixNewLine);
   }
 
   static success(
     name: string,
     message: string,
     prefixNewLine = false,
-    suffixNewLine = false
+    suffixNewLine = false,
+    silent = false
   ) {
-    this.#getInstance(name).success(message, prefixNewLine, suffixNewLine);
+    this.#getInstance(name, silent).success(
+      message,
+      prefixNewLine,
+      suffixNewLine
+    );
   }
 
   static error(
     name: string,
     message: string,
     prefixNewLine = false,
-    suffixNewLine = false
+    suffixNewLine = false,
+    silent = false
   ) {
-    this.#getInstance(name).error(message, prefixNewLine, suffixNewLine);
+    this.#getInstance(name, silent).error(
+      message,
+      prefixNewLine,
+      suffixNewLine
+    );
   }
 }
 

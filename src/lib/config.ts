@@ -204,6 +204,15 @@ export class ConfigManager {
       }
 
       if (
+        deployConfig.onBoot !== undefined &&
+        typeof deployConfig.onBoot !== "boolean"
+      ) {
+        throw new Error(
+          `Invalid onBoot value in configuration for "${name}": ${jsonStringify(deployConfig.onBoot)}`
+        );
+      }
+
+      if (
         deployConfig.contractTransformer !== undefined &&
         typeof deployConfig.contractTransformer !== "function"
       ) {

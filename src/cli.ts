@@ -153,7 +153,7 @@ program
     3000
   )
   .option("--minify", "Reduce the size of the contract before deployment.")
-  .option("--on-boot", "Load contract at process startup.");
+  .option("--on-boot", "Load contract when process is spawned.");
 
 program.parse(process.argv);
 

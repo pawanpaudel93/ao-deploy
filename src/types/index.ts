@@ -132,6 +132,15 @@ export interface DeployConfig {
    * ```
    */
   contractTransformer?: (source: string) => string | Promise<string>;
+
+  /**
+   * Enable AOS On-Boot loading to execute contract at process startup.
+   * Sets "On-Boot=Data" tag during deployment.
+   * CLI: --on-boot
+   * @see https://github.com/permaweb/aos?tab=readme-ov-file#boot-loading
+   * @default false
+   */
+  onBoot?: boolean;
 }
 
 export type Config = Record<ConfigName, DeployConfig>;
@@ -139,7 +148,7 @@ export type Config = Record<ConfigName, DeployConfig>;
 export interface DeployResult {
   name: string;
   configName: string;
-  messageId: string;
+  messageId?: string;
   processId: string;
   isNewProcess: boolean;
 }

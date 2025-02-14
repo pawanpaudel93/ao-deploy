@@ -153,7 +153,11 @@ program
     3000
   )
   .option("--minify", "Reduce the size of the contract before deployment.")
-  .option("--on-boot", "Load contract when process is spawned.");
+  .option("--on-boot", "Load contract when process is spawned.")
+  .option(
+    "--force-spawn",
+    "Force spawning a new process without checking for existing ones."
+  );
 
 program.parse(process.argv);
 
@@ -199,7 +203,8 @@ async function deploymentHandler() {
           muUrl: options.muUrl
         },
         minify: options.minify,
-        onBoot: options.onBoot
+        onBoot: options.onBoot,
+        forceSpawn: options.forceSpawn
       });
       logDeploymentDetails(result);
     } else {

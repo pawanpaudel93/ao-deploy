@@ -133,7 +133,8 @@ export class DeploymentsManager {
     minify,
     contractTransformer,
     onBoot,
-    silent = false
+    silent = false,
+    forceSpawn = false
   }: DeployConfig): Promise<DeployResult> {
     name = name || "default";
     configName = configName || name;
@@ -159,16 +160,20 @@ export class DeploymentsManager {
     // Initialize the AO instance with validated URLs
     const aoInstance = this.#getAoInstance(services);
 
-    if (!processId || (processId && !isArweaveAddress(processId))) {
+    let isNewProcess = forceSpawn;
+
+    if (
+      !forceSpawn &&
+      (!processId || (processId && !isArweaveAddress(processId)))
+    ) {
       processId = await this.#findProcess(
         name,
         owner,
         retry,
         services.gatewayUrl!
       );
+      isNewProcess = !processId;
     }
-
-    const isNewProcess = !processId;
 
     const loader = new LuaProjectLoader(configName, luaPath, silent);
     let contractSrc = await loader.loadContract(contractPath);

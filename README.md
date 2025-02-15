@@ -91,6 +91,7 @@ Options:
   --retry-delay [delay]         Delay between retries in milliseconds. (default: 3000)
   --minify                      Reduce the size of the contract before deployment. (default: false)
   --on-boot                     Load contract when process is spawned. (default: false)
+  --force-spawn                 Force spawning a new process without checking for existing ones. (default: false)
   -h, --help                    display help for command
 ```
 

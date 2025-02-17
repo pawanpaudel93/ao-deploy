@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import type { Config, DeployConfig } from "../types";
 import { defaultLogger } from "./logger";
 import {
+  hasValidBlueprints,
   isArweaveAddress,
   isCronPattern,
   isLuaFile,
@@ -185,9 +186,24 @@ export class ConfigManager {
         );
       }
 
-      if (!isLuaFile(deployConfig.contractPath)) {
+      if (deployConfig.contractPath && !isLuaFile(deployConfig.contractPath)) {
         throw new Error(
           `A "*.lua" file is required for "contractPath" in configuration for "${name}".`
+        );
+      }
+
+      if (
+        deployConfig.blueprints &&
+        !hasValidBlueprints(deployConfig.blueprints)
+      ) {
+        throw new Error(
+          `Invalid "blueprints" value in configuration for "${name}": ${jsonStringify(deployConfig.blueprints)}`
+        );
+      }
+
+      if (!deployConfig.blueprints && !deployConfig.contractPath) {
+        throw new Error(
+          `"contractPath" or "blueprints" is required in configuration for "${name}".`
         );
       }
 
@@ -198,7 +214,7 @@ export class ConfigManager {
 
       if (deployConfig.cron && !isCronPattern(deployConfig.cron)) {
         throw new Error(
-          `Invalid cron value in configuration for "${name}": ${jsonStringify(deployConfig.cron)}`
+          `Invalid "cron" value in configuration for "${name}": ${jsonStringify(deployConfig.cron)}`
         );
       }
 
@@ -207,7 +223,7 @@ export class ConfigManager {
         typeof deployConfig.contractTransformer !== "function"
       ) {
         throw new Error(
-          `Invalid contractTransformer value in configuration for "${name}": ${jsonStringify(deployConfig.contractTransformer)}`
+          `Invalid "contractTransformer" value in configuration for "${name}": ${jsonStringify(deployConfig.contractTransformer)}`
         );
       }
 

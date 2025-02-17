@@ -4,7 +4,8 @@ import { writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { URL } from "node:url";
-import { TRANSACTION_QUERY } from "./constants";
+import type { Blueprint } from "../types";
+import { blueprintsSet, TRANSACTION_QUERY } from "./constants";
 
 /**
  * Initializes a default Arweave instance.
@@ -203,6 +204,11 @@ export function isLuaFile(fileName: string): boolean {
   return fileName.toLowerCase().endsWith(".lua");
 }
 
+export function hasValidBlueprints(blueprints: string[]): boolean {
+  if (!blueprints || !Array.isArray(blueprints)) return false;
+  return blueprints.some((blueprint) => blueprintsSet.has(blueprint));
+}
+
 export function isCronPattern(cron: string): boolean {
   if (!cron) {
     return false;
@@ -292,4 +298,27 @@ export async function pollForProcessSpawn({
       `Failed to find process ${processId} after ${maxAttempts} attempts. The process may still be spawning.`
     );
   }
+}
+
+export async function loadBlueprint(blueprint: Blueprint) {
+  try {
+    const blueprintData = await (
+      await fetch(
+        `https://raw.githubusercontent.com/permaweb/aos/refs/heads/main/blueprints/${blueprint}.lua`
+      )
+    ).text();
+    return blueprintData;
+  } catch {
+    return "";
+  }
+}
+
+export async function loadBlueprints(blueprints?: Blueprint[]) {
+  if (!blueprints) return "";
+  blueprints = blueprints.filter((blueprint) => blueprintsSet.has(blueprint));
+  if (blueprints.length === 0) return "";
+  const blueprintsData = await Promise.all(
+    blueprints.map((blueprint) => loadBlueprint(blueprint))
+  );
+  return blueprintsData.filter(Boolean).join("\n\n");
 }

@@ -12,7 +12,13 @@ import { deployContract, deployContracts } from "./lib/deploy";
 import { BuildError, DeployError } from "./lib/error";
 import { loadAndBundleContracts } from "./lib/loader";
 import { Logger } from "./lib/logger";
-import { clearBuildOutDir, isLuaFile, parseToInt, parseUrl } from "./lib/utils";
+import {
+  clearBuildOutDir,
+  hasValidBlueprints,
+  isLuaFile,
+  parseToInt,
+  parseUrl
+} from "./lib/utils";
 import type { BundleResult, DeployResult, Tag } from "./types";
 
 const PKG_ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "../");
@@ -75,7 +81,7 @@ program
   .description("Deploy AO contracts using a CLI.")
   .version(packageJson.version)
   .argument(
-    "<contractOrConfigPath>",
+    "[contractOrConfigPath]",
     "Path to the main contract file or deployment configuration."
   )
   .option("-n, --name [name]", "Specify the process name.", "default")
@@ -153,20 +159,26 @@ program
     3000
   )
   .option("--minify", "Reduce the size of the contract before deployment.")
-  .option("--on-boot", "Load contract when process is spawned.");
+  .option("--on-boot", "Load contract when process is spawned.")
+  .option(
+    "--blueprints [blueprints...]",
+    "Blueprints to use for the contract."
+  );
 
 program.parse(process.argv);
 
 const options = program.opts();
 const contractOrConfigPath = program.args[0];
+const hasBlueprints = hasValidBlueprints(options.blueprints);
 const isContractPath = isLuaFile(contractOrConfigPath);
+const isContractPathOrBlueprint = isContractPath || hasBlueprints;
 const isBuildOnly = options.buildOnly;
 const outDir = options.outDir || "./process-dist";
 
 async function deploymentHandler() {
   try {
     Logger.log(packageJson.name, "Deploying...", false, true);
-    if (isContractPath) {
+    if (isContractPathOrBlueprint) {
       const tags: Tag[] = Array.isArray(options.tags)
         ? options.tags.reduce<Tag[]>((accumulator, tag) => {
             if (tag && tag.includes(":")) {
@@ -199,7 +211,8 @@ async function deploymentHandler() {
           muUrl: options.muUrl
         },
         minify: options.minify,
-        onBoot: options.onBoot
+        onBoot: options.onBoot,
+        blueprints: options.blueprints
       });
       logDeploymentDetails(result);
     } else {
@@ -239,7 +252,7 @@ async function buildHandler() {
 
     const name = options.name || "bundle";
 
-    if (isContractPath) {
+    if (isContractPathOrBlueprint) {
       const [result] = await loadAndBundleContracts(
         [
           {
@@ -247,7 +260,8 @@ async function buildHandler() {
             name,
             outDir,
             luaPath: options.luaPath,
-            minify: options.minify
+            minify: options.minify,
+            blueprints: options.blueprints
           }
         ],
         1
@@ -270,7 +284,8 @@ async function buildHandler() {
         outDir: config.outDir || "./process-dist",
         luaPath: config.luaPath,
         minify: config.minify,
-        contractTransformer: config.contractTransformer
+        contractTransformer: config.contractTransformer,
+        blueprints: config.blueprints
       }));
       const results = await loadAndBundleContracts(
         bundlingConfigs,
@@ -302,6 +317,13 @@ async function buildHandler() {
 }
 
 (async () => {
+  if (!contractOrConfigPath && !hasBlueprints) {
+    Logger.error(
+      packageJson.name,
+      "Either contract path, config path or blueprints must be provided!"
+    );
+    process.exit(1);
+  }
   try {
     if (isBuildOnly) {
       await buildHandler();

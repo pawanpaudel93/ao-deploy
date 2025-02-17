@@ -9,6 +9,7 @@ import {
   isArweaveAddress,
   isCronPattern,
   isUrl,
+  loadBlueprints,
   parseToInt,
   pollForProcessSpawn,
   retryWithDelay
@@ -111,6 +112,18 @@ export class DeploymentsManager {
     }
   }
 
+  #logDeploying(logger: Logger, contractPath?: string, blueprints?: string[]) {
+    let message = "";
+    if (contractPath && !blueprints) {
+      message = `Deploying: ${contractPath}`;
+    } else if (!contractPath && blueprints) {
+      message = `Deploying: Blueprint${blueprints.length > 1 ? "s" : ""} => ${blueprints?.join(", ")}`;
+    } else if (contractPath && blueprints) {
+      message = `Deploying: ${contractPath} with blueprint${blueprints?.length > 1 ? "s" : ""} => ${blueprints?.join(", ")}`;
+    }
+    if (message) logger.log(message, false, true);
+  }
+
   /**
    * Deploys or updates a contract on AO.
    * @param {DeployConfig} deployConfig - Configuration options for the deployment.
@@ -133,6 +146,7 @@ export class DeploymentsManager {
     minify,
     contractTransformer,
     onBoot,
+    blueprints,
     silent = false
   }: DeployConfig): Promise<DeployResult> {
     name = name || "default";
@@ -170,8 +184,30 @@ export class DeploymentsManager {
 
     const isNewProcess = !processId;
 
+    let contractSrc = "";
+    let blueprintsSrc = "";
+
+    if (Array.isArray(blueprints) && blueprints.length > 0) {
+      blueprintsSrc = await loadBlueprints(blueprints);
+    }
+
     const loader = new LuaProjectLoader(configName, luaPath, silent);
-    let contractSrc = await loader.loadContract(contractPath);
+    if (contractPath) {
+      contractSrc = await loader.loadContract(contractPath);
+    }
+
+    if (blueprintsSrc || contractSrc) {
+      contractSrc = [blueprintsSrc, contractSrc]
+        .filter(Boolean)
+        .join("\n\n")
+        .trim();
+    }
+
+    if (!contractSrc) {
+      throw new Error(
+        "No valid source code found. Please provide either a valid contract path or blueprints."
+      );
+    }
 
     if (contractTransformer && typeof contractTransformer === "function") {
       logger.log("Transforming contract...", false, false);
@@ -195,7 +231,7 @@ export class DeploymentsManager {
       ];
 
       if (onBoot) {
-        logger.log(`Deploying: ${contractPath}`, false, true);
+        this.#logDeploying(logger, contractPath, blueprints);
         tags = [...tags, { name: "On-Boot", value: "Data" }];
       }
 
@@ -227,7 +263,7 @@ export class DeploymentsManager {
       if (!isNewProcess) {
         logger.log("Updating existing process...", false, true);
       }
-      logger.log(`Deploying: ${contractPath}`, false, true);
+      this.#logDeploying(logger, contractPath, blueprints);
       // Load contract to process
       messageId = await retryWithDelay(
         async () =>

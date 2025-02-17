@@ -18,7 +18,7 @@ import createFileTree from "pretty-file-tree";
 import type { BundleResult, BundlingConfig, Module } from "../types";
 import { Logger } from "./logger";
 import { minifyLuaCode } from "./minify";
-import { writeFileToProjectDir } from "./utils";
+import { loadBlueprints, writeFileToProjectDir } from "./utils";
 
 const execAsync = util.promisify(exec);
 
@@ -214,7 +214,23 @@ export class LuaProjectLoader {
 
   async loadAndBundleContract(config: BundlingConfig): Promise<BundleResult> {
     try {
-      let contractSrc = await this.loadContract(config.contractPath);
+      let contractSrc = "";
+      let blueprintsSrc = "";
+
+      if (config.contractPath) {
+        contractSrc = await this.loadContract(config.contractPath);
+      }
+
+      if (config.blueprints && config.blueprints.length > 0) {
+        blueprintsSrc = await loadBlueprints(config.blueprints);
+      }
+
+      if (contractSrc || blueprintsSrc) {
+        contractSrc = [blueprintsSrc, contractSrc]
+          .filter(Boolean)
+          .join("\n\n")
+          .trim();
+      }
 
       if (
         config.contractTransformer &&

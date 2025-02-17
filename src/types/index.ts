@@ -147,6 +147,11 @@ export interface DeployConfig {
    * @default false
    */
   silent?: boolean;
+
+  /**
+   * Blueprints to use for deployment
+   */
+  blueprints?: Blueprint[];
 }
 
 export type Config = Record<ConfigName, DeployConfig>;
@@ -172,6 +177,7 @@ export interface BundlingConfig {
   outDir: string;
   luaPath?: string;
   minify?: boolean;
+  blueprints?: Blueprint[];
   contractTransformer?: (source: string) => string | Promise<string>;
 }
 
@@ -188,3 +194,14 @@ export interface AosConfig {
   scheduler: string;
   authority: string;
 }
+
+export type Blueprint =
+  | "apm"
+  | "arena"
+  | "arns"
+  | "chat"
+  | "chatroom"
+  | "patch-legacy-reply"
+  | "staking"
+  | "token"
+  | "voting";

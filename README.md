@@ -301,6 +301,7 @@ The `deployContract` function accepts the following parameters within the Deploy
 - `onBoot` (optional): Load contract when process is spawned. (default: false)
 - `silent` (optional): Disable logging to console. (default: false)
 - `blueprints` (optional): Blueprints to use for the contract.
+- `forceSpawn` (optional): Force spawning a new process without checking for existing ones. (default: false)
 
 #### Example: deployContracts
 

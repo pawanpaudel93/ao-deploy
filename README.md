@@ -16,6 +16,7 @@ A package for deploying AO contracts.
 - Flexible concurrency and retry options for reliable deployments.
 - CLI and API interfaces for versatile usage.
 - Minify or modify the contract before deployment.
+- Support for blueprints.
 
 ## Installation
 
@@ -91,6 +92,7 @@ Options:
   --retry-delay [delay]         Delay between retries in milliseconds. (default: 3000)
   --minify                      Reduce the size of the contract before deployment. (default: false)
   --on-boot                     Load contract when process is spawned. (default: false)
+  --blueprints [blueprints...]  Blueprints to use for the contract.
   -h, --help                    display help for command
 ```
 
@@ -297,6 +299,7 @@ The `deployContract` function accepts the following parameters within the Deploy
 - `contractTransformer` (optional): Custom function to transform source code before deployment.
 - `onBoot` (optional): Load contract when process is spawned. (default: false)
 - `silent` (optional): Disable logging to console. (default: false)
+- `blueprints` (optional): Blueprints to use for the contract.
 
 #### Example: deployContracts
 

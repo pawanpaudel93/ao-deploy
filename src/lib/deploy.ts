@@ -147,7 +147,8 @@ export class DeploymentsManager {
     contractTransformer,
     onBoot,
     blueprints,
-    silent = false
+    silent = false,
+    forceSpawn = false
   }: DeployConfig): Promise<DeployResult> {
     name = name || "default";
     configName = configName || name;
@@ -173,16 +174,20 @@ export class DeploymentsManager {
     // Initialize the AO instance with validated URLs
     const aoInstance = this.#getAoInstance(services);
 
-    if (!processId || (processId && !isArweaveAddress(processId))) {
+    let isNewProcess = forceSpawn;
+
+    if (
+      !forceSpawn &&
+      (!processId || (processId && !isArweaveAddress(processId)))
+    ) {
       processId = await this.#findProcess(
         name,
         owner,
         retry,
         services.gatewayUrl!
       );
+      isNewProcess = !processId;
     }
-
-    const isNewProcess = !processId;
 
     let contractSrc = "";
     let blueprintsSrc = "";

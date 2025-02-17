@@ -152,6 +152,12 @@ export interface DeployConfig {
    * Blueprints to use for deployment
    */
   blueprints?: Blueprint[];
+
+  /**
+   * Force spawning a new process without checking for existing ones.
+   * @default false
+   */
+  forceSpawn?: boolean;
 }
 
 export type Config = Record<ConfigName, DeployConfig>;

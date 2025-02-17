@@ -160,9 +160,10 @@ program
   )
   .option("--minify", "Reduce the size of the contract before deployment.")
   .option("--on-boot", "Load contract when process is spawned.")
+  .option("--blueprints [blueprints...]", "Blueprints to use for the contract.")
   .option(
-    "--blueprints [blueprints...]",
-    "Blueprints to use for the contract."
+    "--force-spawn",
+    "Force spawning a new process without checking for existing ones."
   );
 
 program.parse(process.argv);
@@ -212,7 +213,8 @@ async function deploymentHandler() {
         },
         minify: options.minify,
         onBoot: options.onBoot,
-        blueprints: options.blueprints
+        blueprints: options.blueprints,
+        forceSpawn: options.forceSpawn
       });
       logDeploymentDetails(result);
     } else {

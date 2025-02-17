@@ -93,6 +93,7 @@ Options:
   --minify                      Reduce the size of the contract before deployment. (default: false)
   --on-boot                     Load contract when process is spawned. (default: false)
   --blueprints [blueprints...]  Blueprints to use for the contract.
+  --force-spawn                 Force spawning a new process without checking for existing ones. (default: false)
   -h, --help                    display help for command
 ```
 

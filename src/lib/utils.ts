@@ -6,6 +6,7 @@ import process from "node:process";
 import { URL } from "node:url";
 import type { Blueprint } from "../types";
 import { blueprintsSet, TRANSACTION_QUERY } from "./constants";
+import { Logger } from "./logger";
 
 /**
  * Initializes a default Arweave instance.
@@ -321,4 +322,34 @@ export async function loadBlueprints(blueprints?: Blueprint[]) {
     blueprints.map((blueprint) => loadBlueprint(blueprint))
   );
   return blueprintsData.filter(Boolean).join("\n\n");
+}
+
+/**
+ * Logs the deployment or build status of a contract and/or blueprints.
+ * @param action - The action being performed ("deployment" | "build").
+ * @param logger - The logger instance to use.
+ * @param contractPath - Optional path to the contract being processed.
+ * @param blueprints - Optional array of blueprints being used.
+ */
+export function logActionStatus(
+  action: "deploy" | "bundle",
+  logger: Logger,
+  contractPath?: string,
+  blueprints?: string[]
+) {
+  const actionText = action === "deploy" ? "Deploying" : "Bundling";
+
+  const formatBlueprintList = (blueprints?: string[]) => {
+    if (!blueprints?.length) return "";
+    const plural = blueprints.length > 1 ? "s" : "";
+    return `blueprint${plural} => ${blueprints.join(", ")}`;
+  };
+
+  const components = [contractPath, formatBlueprintList(blueprints)].filter(
+    Boolean
+  );
+
+  if (components.length) {
+    logger.log(`${actionText}: ${components.join(" with ")}`, false, true);
+  }
 }

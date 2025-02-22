@@ -10,6 +10,7 @@ import {
   isCronPattern,
   isUrl,
   loadBlueprints,
+  logActionStatus,
   parseToInt,
   pollForProcessSpawn,
   retryWithDelay
@@ -110,18 +111,6 @@ export class DeploymentsManager {
     if (!isCronValid) {
       throw new Error("Invalid cron flag!");
     }
-  }
-
-  #logDeploying(logger: Logger, contractPath?: string, blueprints?: string[]) {
-    let message = "";
-    if (contractPath && !blueprints) {
-      message = `Deploying: ${contractPath}`;
-    } else if (!contractPath && blueprints) {
-      message = `Deploying: Blueprint${blueprints.length > 1 ? "s" : ""} => ${blueprints?.join(", ")}`;
-    } else if (contractPath && blueprints) {
-      message = `Deploying: ${contractPath} with blueprint${blueprints?.length > 1 ? "s" : ""} => ${blueprints?.join(", ")}`;
-    }
-    if (message) logger.log(message, false, true);
   }
 
   /**
@@ -236,7 +225,7 @@ export class DeploymentsManager {
       ];
 
       if (onBoot) {
-        this.#logDeploying(logger, contractPath, blueprints);
+        logActionStatus("deploy", logger, contractPath, blueprints);
         tags = [...tags, { name: "On-Boot", value: "Data" }];
       }
 
@@ -268,7 +257,7 @@ export class DeploymentsManager {
       if (!isNewProcess) {
         logger.log("Updating existing process...", false, true);
       }
-      this.#logDeploying(logger, contractPath, blueprints);
+      logActionStatus("deploy", logger, contractPath, blueprints);
       // Load contract to process
       messageId = await retryWithDelay(
         async () =>

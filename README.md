@@ -118,6 +118,12 @@ ao-deploy process.lua -n tictactoe -w wallet.json --tags name1:value1 name2:valu
 ao-deploy process.lua -n tictactoe -w wallet.json --tags name1:value1 name2:value2 --on-boot
 ```
 
+#### Example: Deploy blueprints
+
+```sh
+ao-deploy -n tictactoe -w wallet.json --blueprints arns token
+```
+
 #### Example: Deploy contracts with configuration
 
 Here is an example using a deployment configuration:

@@ -207,7 +207,7 @@ export function isLuaFile(fileName: string): boolean {
 
 export function hasValidBlueprints(blueprints: string[]): boolean {
   if (!blueprints || !Array.isArray(blueprints)) return false;
-  return blueprints.some((blueprint) => blueprintsSet.has(blueprint));
+  return blueprints.every((blueprint) => blueprintsSet.has(blueprint));
 }
 
 export function isCronPattern(cron: string): boolean {

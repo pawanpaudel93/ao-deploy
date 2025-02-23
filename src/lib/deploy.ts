@@ -6,6 +6,7 @@ import { LuaProjectLoader } from "./loader";
 import { Logger } from "./logger";
 import {
   getArweave,
+  hasValidBlueprints,
   isArweaveAddress,
   isCronPattern,
   isUrl,
@@ -163,6 +164,8 @@ export class DeploymentsManager {
     // Initialize the AO instance with validated URLs
     const aoInstance = this.#getAoInstance(services);
 
+    logActionStatus("deploy", logger, contractPath, blueprints);
+
     let isNewProcess = forceSpawn;
 
     if (
@@ -181,6 +184,12 @@ export class DeploymentsManager {
     let contractSrc = "";
     let blueprintsSrc = "";
 
+    if (!contractPath && !hasValidBlueprints(blueprints)) {
+      throw new Error(
+        "Please provide either a valid contract path or blueprints."
+      );
+    }
+
     if (Array.isArray(blueprints) && blueprints.length > 0) {
       blueprintsSrc = await loadBlueprints(blueprints);
     }
@@ -195,12 +204,6 @@ export class DeploymentsManager {
         .filter(Boolean)
         .join("\n\n")
         .trim();
-    }
-
-    if (!contractSrc) {
-      throw new Error(
-        "No valid source code found. Please provide either a valid contract path or blueprints."
-      );
     }
 
     if (contractTransformer && typeof contractTransformer === "function") {
@@ -260,7 +263,6 @@ export class DeploymentsManager {
       if (!isNewProcess) {
         logger.log("Updating existing process...", false, true);
       }
-      logActionStatus("deploy", logger, contractPath, blueprints);
       // Load contract to process
       messageId = await retryWithDelay(
         async () =>

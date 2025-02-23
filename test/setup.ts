@@ -9,7 +9,7 @@ export async function setup() {
   waoProcess = spawn("npx", ["wao-esm"], {
     stdio: ["ignore", "pipe", "pipe"],
     detached: true,
-    env: { ...process.env, FORCE_COLOR: "0" } // Disable color codes in output
+    env: { ...process.env }
   });
 
   // Wait for wao to be ready (increased timeout to 30s)

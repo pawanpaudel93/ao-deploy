@@ -212,6 +212,7 @@ export function isLuaFile(fileName: string): boolean {
  * @returns boolean indicating if all blueprints are valid
  */
 export function hasValidBlueprints(blueprints?: readonly string[]): boolean {
+  if (!blueprints) return false;
   return (
     Array.isArray(blueprints) &&
     blueprints.length > 0 &&

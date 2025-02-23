@@ -1,11 +1,11 @@
 name: Protocol Land Sync
 on:
-    # Run with every push to 'main' branch:
-    push:
-        branches:
-            - 'main'
+    # # Run with every push to 'main' branch:
+    # push:
+    #     branches:
+    #         - 'main'
     # Run Manually:
-    #workflow_dispatch:
+    workflow_dispatch:
 
 jobs:
     build:
@@ -16,12 +16,12 @@ jobs:
               with:
                   # fetch all history for all branches:
                   fetch-depth: 0
-            - name: 'Checkout all branches'
-              run: |
-                  default_branch=$(git branch | grep '*' | sed 's/\* //')
-                  for abranch in $(git branch -a | grep -v HEAD | grep remotes | sed "s/remotes\/origin\///g"); do git checkout $abranch ; done
-                  git checkout $default_branch
-                  git branch -a
+            # - name: 'Checkout all branches'
+            #   run: |
+            #       default_branch=$(git branch | grep '*' | sed 's/\* //')
+            #       for abranch in $(git branch -a | grep -v HEAD | grep remotes | sed "s/remotes\/origin\///g"); do git checkout $abranch ; done
+            #       git checkout $default_branch
+            #       git branch -a
             - name: 'Setup node 18'
               uses: actions/setup-node@v3
               with:

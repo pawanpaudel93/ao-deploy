@@ -27,7 +27,7 @@ export interface Services {
   muUrl?: string;
 }
 
-export interface DeployConfig {
+export type DeployConfig = {
   /**
    * Process name to spawn
    * @default "default"
@@ -38,11 +38,6 @@ export interface DeployConfig {
    * Config name used for logging
    */
   configName?: string;
-
-  /**
-   * Path to contract main file
-   */
-  contractPath?: string;
 
   /**
    * The module source to use to spin up Process
@@ -149,16 +144,29 @@ export interface DeployConfig {
   silent?: boolean;
 
   /**
-   * Blueprints to use for deployment
-   */
-  blueprints?: Blueprint[];
-
-  /**
    * Force spawning a new process without checking for existing ones.
    * @default false
    */
   forceSpawn?: boolean;
-}
+} & (
+  | {
+      /**
+       * Path to contract main file
+       */
+      contractPath: string;
+      /**
+       * Blueprints to use for deployment
+       */
+      blueprints?: Blueprint[];
+    }
+  | {
+      contractPath?: string;
+      /**
+       * Blueprints to use for deployment
+       */
+      blueprints: Blueprint[];
+    }
+);
 
 export type Config = Record<ConfigName, DeployConfig>;
 
@@ -177,15 +185,22 @@ export interface BundleResult {
   size: number;
 }
 
-export interface BundlingConfig {
+export type BundlingConfig = {
   name: string;
-  contractPath?: string;
   outDir: string;
   luaPath?: string;
   minify?: boolean;
-  blueprints?: Blueprint[];
   contractTransformer?: (source: string) => string | Promise<string>;
-}
+} & (
+  | {
+      contractPath: string;
+      blueprints?: Blueprint[];
+    }
+  | {
+      contractPath?: string;
+      blueprints: Blueprint[];
+    }
+);
 
 export interface Module {
   name: string;

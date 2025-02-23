@@ -19,7 +19,7 @@ import {
   parseToInt,
   parseUrl
 } from "./lib/utils";
-import type { BundleResult, DeployResult, Tag } from "./types";
+import type { BundleResult, BundlingConfig, DeployResult, Tag } from "./types";
 
 const PKG_ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "../");
 
@@ -288,7 +288,7 @@ async function buildHandler() {
         minify: config.minify,
         contractTransformer: config.contractTransformer,
         blueprints: config.blueprints
-      }));
+      })) as BundlingConfig[];
       const results = await loadAndBundleContracts(
         bundlingConfigs,
         concurrency

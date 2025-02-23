@@ -91,7 +91,7 @@
     "pre-commit": "pnpm lint-staged"
   },
   "lint-staged": {
-    "*.{js,ts}": "eslint . --fix"
+    "*": "eslint . --fix"
   },
   "peerDependencies": {
     "lua-format": "^1.5.2"

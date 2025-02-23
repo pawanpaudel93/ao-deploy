@@ -9,14 +9,14 @@ A package for deploying AO contracts.
 
 ## Features
 
-- Build only or deploy AO contracts with ease.
-- Custom LUA_PATH support.
-- Support LuaRocks packages.
-- Support for deployment configuration.
-- Flexible concurrency and retry options for reliable deployments.
-- CLI and API interfaces for versatile usage.
-- Minify or modify the contract before deployment.
-- Support for blueprints.
+- 🚀 Build and deploy contracts with ease
+- 🔧 Custom LUA_PATH support
+- 📦 LuaRocks package support
+- ⚙️ Flexible deployment configuration
+- 🔄 Concurrent deployments with retry options
+- 📝 Contract minification and transformation
+- 🧩 Blueprint support
+- 🛠️ CLI and API interfaces
 
 ## Installation
 
@@ -365,6 +365,10 @@ async function main() {
 
 main();
 ```
+
+## Related
+
+- [create-ao-contract](https://github.com/pawanpaudel93/create-ao-contract): A CLI tool for scaffolding AO contracts.
 
 ## Author
 

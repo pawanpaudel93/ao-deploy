@@ -19,6 +19,7 @@ import type { BundleResult, BundlingConfig, Module } from "../types";
 import { Logger } from "./logger";
 import { minifyLuaCode } from "./minify";
 import {
+  hasValidBlueprints,
   loadBlueprints,
   logActionStatus,
   writeFileToProjectDir
@@ -227,6 +228,12 @@ export class LuaProjectLoader {
 
       let contractSrc = "";
       let blueprintsSrc = "";
+
+      if (!config.contractPath && !hasValidBlueprints(config.blueprints)) {
+        throw new Error(
+          "Please provide either a valid contract path or blueprints."
+        );
+      }
 
       if (config.contractPath) {
         contractSrc = await this.loadContract(config.contractPath);

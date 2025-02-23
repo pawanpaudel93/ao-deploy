@@ -9,13 +9,14 @@ A package for deploying AO contracts.
 
 ## Features
 
-- Build only or deploy AO contracts with ease.
-- Custom LUA_PATH support.
-- Support LuaRocks packages.
-- Support for deployment configuration.
-- Flexible concurrency and retry options for reliable deployments.
-- CLI and API interfaces for versatile usage.
-- Minify or modify the contract before deployment.
+- 🚀 Build and deploy contracts with ease
+- 🔧 Custom LUA_PATH support
+- 📦 LuaRocks package support
+- ⚙️ Flexible deployment configuration
+- 🔄 Concurrent deployments with retry options
+- 📝 Contract minification and transformation
+- 🧩 Blueprint support
+- 🛠️ CLI and API interfaces
 
 ## Installation
 
@@ -91,6 +92,7 @@ Options:
   --retry-delay [delay]         Delay between retries in milliseconds. (default: 3000)
   --minify                      Reduce the size of the contract before deployment. (default: false)
   --on-boot                     Load contract when process is spawned. (default: false)
+  --blueprints [blueprints...]  Blueprints to use for the contract.
   --force-spawn                 Force spawning a new process without checking for existing ones. (default: false)
   -h, --help                    display help for command
 ```
@@ -114,6 +116,12 @@ ao-deploy process.lua -n tictactoe -w wallet.json --tags name1:value1 name2:valu
 
 ```sh
 ao-deploy process.lua -n tictactoe -w wallet.json --tags name1:value1 name2:value2 --on-boot
+```
+
+#### Example: Deploy blueprints
+
+```sh
+ao-deploy -n tictactoe -w wallet.json --blueprints arns token
 ```
 
 #### Example: Deploy contracts with configuration
@@ -298,6 +306,8 @@ The `deployContract` function accepts the following parameters within the Deploy
 - `contractTransformer` (optional): Custom function to transform source code before deployment.
 - `onBoot` (optional): Load contract when process is spawned. (default: false)
 - `silent` (optional): Disable logging to console. (default: false)
+- `blueprints` (optional): Blueprints to use for the contract.
+- `forceSpawn` (optional): Force spawning a new process without checking for existing ones. (default: false)
 
 #### Example: deployContracts
 
@@ -355,6 +365,10 @@ async function main() {
 
 main();
 ```
+
+## Related
+
+- [create-ao-contract](https://github.com/pawanpaudel93/create-ao-contract): A CLI tool for scaffolding AO contracts.
 
 ## Author
 

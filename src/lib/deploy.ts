@@ -6,9 +6,12 @@ import { LuaProjectLoader } from "./loader";
 import { Logger } from "./logger";
 import {
   getArweave,
+  hasValidBlueprints,
   isArweaveAddress,
   isCronPattern,
   isUrl,
+  loadBlueprints,
+  logActionStatus,
   parseToInt,
   pollForProcessSpawn,
   retryWithDelay
@@ -133,6 +136,7 @@ export class DeploymentsManager {
     minify,
     contractTransformer,
     onBoot,
+    blueprints,
     silent = false,
     forceSpawn = false
   }: DeployConfig): Promise<DeployResult> {
@@ -160,6 +164,8 @@ export class DeploymentsManager {
     // Initialize the AO instance with validated URLs
     const aoInstance = this.#getAoInstance(services);
 
+    logActionStatus("deploy", logger, contractPath, blueprints);
+
     let isNewProcess = forceSpawn;
 
     if (
@@ -175,8 +181,30 @@ export class DeploymentsManager {
       isNewProcess = !processId;
     }
 
+    let contractSrc = "";
+    let blueprintsSrc = "";
+
+    if (!contractPath && !hasValidBlueprints(blueprints)) {
+      throw new Error(
+        "Please provide either a valid contract path or blueprints."
+      );
+    }
+
+    if (Array.isArray(blueprints) && blueprints.length > 0) {
+      blueprintsSrc = await loadBlueprints(blueprints);
+    }
+
     const loader = new LuaProjectLoader(configName, luaPath, silent);
-    let contractSrc = await loader.loadContract(contractPath);
+    if (contractPath) {
+      contractSrc = await loader.loadContract(contractPath);
+    }
+
+    if (blueprintsSrc || contractSrc) {
+      contractSrc = [blueprintsSrc, contractSrc]
+        .filter(Boolean)
+        .join("\n\n")
+        .trim();
+    }
 
     if (contractTransformer && typeof contractTransformer === "function") {
       logger.log("Transforming contract...", false, false);
@@ -200,7 +228,6 @@ export class DeploymentsManager {
       ];
 
       if (onBoot) {
-        logger.log(`Deploying: ${contractPath}`, false, true);
         tags = [...tags, { name: "On-Boot", value: "Data" }];
       }
 
@@ -220,7 +247,10 @@ export class DeploymentsManager {
         retry.delay
       );
 
-      await pollForProcessSpawn({ processId });
+      await pollForProcessSpawn({
+        processId,
+        gatewayUrl: services.gatewayUrl
+      });
 
       if (onBoot) {
         return { name, processId, isNewProcess, configName };
@@ -232,7 +262,6 @@ export class DeploymentsManager {
       if (!isNewProcess) {
         logger.log("Updating existing process...", false, true);
       }
-      logger.log(`Deploying: ${contractPath}`, false, true);
       // Load contract to process
       messageId = await retryWithDelay(
         async () =>

@@ -35,3 +35,15 @@ export const TRANSACTION_QUERY = `query ($ids: [ID!]!) {
     }
   }
 }`;
+
+export const blueprintsSet = new Set([
+  "apm",
+  "arena",
+  "arns",
+  "chat",
+  "chatroom",
+  "patch-legacy-reply",
+  "staking",
+  "token",
+  "voting"
+]);

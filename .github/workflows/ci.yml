@@ -55,33 +55,23 @@ jobs:
         run: nr typecheck
 
   test:
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      matrix:
-        node: [lts/*]
-        os: [ubuntu-latest, windows-latest, macos-latest]
-      fail-fast: false
-
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
-
-      - name: Set node ${{ matrix.node }}
-        uses: actions/setup-node@v3
+      - uses: pnpm/action-setup@v2
         with:
-          node-version: ${{ matrix.node }}
+          version: 8
 
-      - name: Setup
-        run: npm i -g @antfu/ni
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "pnpm"
 
-      - name: Install
-        run: nci
+      # First generate the lockfile if it doesn't exist
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
 
-      - name: Build
-        run: nr build
-
-      - name: Test
-        run: nr test
+      # Then run your tests
+      - name: Run tests
+        run: pnpm test

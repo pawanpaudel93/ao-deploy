@@ -27,7 +27,7 @@ export interface Services {
   muUrl?: string;
 }
 
-export interface DeployConfig {
+export type DeployConfig = {
   /**
    * Process name to spawn
    * @default "default"
@@ -38,11 +38,6 @@ export interface DeployConfig {
    * Config name used for logging
    */
   configName?: string;
-
-  /**
-   * Path to contract main file
-   */
-  contractPath: string;
 
   /**
    * The module source to use to spin up Process
@@ -153,7 +148,25 @@ export interface DeployConfig {
    * @default false
    */
   forceSpawn?: boolean;
-}
+} & (
+  | {
+      /**
+       * Path to contract main file
+       */
+      contractPath: string;
+      /**
+       * Blueprints to use for deployment
+       */
+      blueprints?: Blueprint[];
+    }
+  | {
+      contractPath?: string;
+      /**
+       * Blueprints to use for deployment
+       */
+      blueprints: Blueprint[];
+    }
+);
 
 export type Config = Record<ConfigName, DeployConfig>;
 
@@ -172,14 +185,22 @@ export interface BundleResult {
   size: number;
 }
 
-export interface BundlingConfig {
+export type BundlingConfig = {
   name: string;
-  contractPath: string;
   outDir: string;
   luaPath?: string;
   minify?: boolean;
   contractTransformer?: (source: string) => string | Promise<string>;
-}
+} & (
+  | {
+      contractPath: string;
+      blueprints?: Blueprint[];
+    }
+  | {
+      contractPath?: string;
+      blueprints: Blueprint[];
+    }
+);
 
 export interface Module {
   name: string;
@@ -194,3 +215,14 @@ export interface AosConfig {
   scheduler: string;
   authority: string;
 }
+
+export type Blueprint =
+  | "apm"
+  | "arena"
+  | "arns"
+  | "chat"
+  | "chatroom"
+  | "patch-legacy-reply"
+  | "staking"
+  | "token"
+  | "voting";

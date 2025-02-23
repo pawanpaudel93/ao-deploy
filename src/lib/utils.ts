@@ -4,7 +4,9 @@ import { writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { URL } from "node:url";
-import { TRANSACTION_QUERY } from "./constants";
+import type { Blueprint } from "../types";
+import { blueprintsSet, TRANSACTION_QUERY } from "./constants";
+import { Logger } from "./logger";
 
 /**
  * Initializes a default Arweave instance.
@@ -40,8 +42,9 @@ function parseGatewayUrl(url: string): {
  * @param gateway - The gateway URL to connect to.
  * @returns An Arweave instance configured with the provided gateway.
  */
-export function getArweave(gateway: string) {
+export function getArweave(gateway?: string) {
   try {
+    if (!gateway) return arweave;
     const { host, port, protocol } = parseGatewayUrl(gateway);
     return Arweave.init({ host, port, protocol });
   } catch {
@@ -203,6 +206,22 @@ export function isLuaFile(fileName: string): boolean {
   return fileName.toLowerCase().endsWith(".lua");
 }
 
+/**
+ * Validates if the provided blueprints array contains only valid blueprint names
+ * @param blueprints - Array of blueprint names to validate
+ * @returns boolean indicating if all blueprints are valid
+ */
+export function hasValidBlueprints(blueprints?: readonly string[]): boolean {
+  if (!blueprints) return false;
+  return (
+    Array.isArray(blueprints) &&
+    blueprints.length > 0 &&
+    blueprints.every((blueprint): blueprint is keyof typeof blueprintsSet =>
+      blueprintsSet.has(blueprint)
+    )
+  );
+}
+
 export function isCronPattern(cron: string): boolean {
   if (!cron) {
     return false;
@@ -256,9 +275,11 @@ interface PollingOptions {
 
 export async function pollForProcessSpawn({
   processId,
+  gatewayUrl,
   options = {}
 }: {
   processId: string;
+  gatewayUrl?: string;
   options?: PollingOptions;
 }): Promise<void> {
   const {
@@ -266,6 +287,8 @@ export async function pollForProcessSpawn({
     initialDelayMs = 3000,
     backoffFactor = 1.5
   } = options;
+
+  const arweave = getArweave(gatewayUrl);
 
   const queryTransaction = async () => {
     const response = await arweave.api.post("/graphql", {
@@ -291,5 +314,58 @@ export async function pollForProcessSpawn({
     throw new Error(
       `Failed to find process ${processId} after ${maxAttempts} attempts. The process may still be spawning.`
     );
+  }
+}
+
+export async function loadBlueprint(blueprint: Blueprint) {
+  try {
+    const blueprintData = await (
+      await fetch(
+        `https://raw.githubusercontent.com/permaweb/aos/refs/heads/main/blueprints/${blueprint}.lua`
+      )
+    ).text();
+    return blueprintData;
+  } catch {
+    return "";
+  }
+}
+
+export async function loadBlueprints(blueprints?: Blueprint[]) {
+  if (!blueprints) return "";
+  blueprints = blueprints.filter((blueprint) => blueprintsSet.has(blueprint));
+  if (blueprints.length === 0) return "";
+  const blueprintsData = await Promise.all(
+    blueprints.map((blueprint) => loadBlueprint(blueprint))
+  );
+  return blueprintsData.filter(Boolean).join("\n\n");
+}
+
+/**
+ * Logs the deployment or build status of a contract and/or blueprints.
+ * @param action - The action being performed ("deployment" | "build").
+ * @param logger - The logger instance to use.
+ * @param contractPath - Optional path to the contract being processed.
+ * @param blueprints - Optional array of blueprints being used.
+ */
+export function logActionStatus(
+  action: "deploy" | "bundle",
+  logger: Logger,
+  contractPath?: string,
+  blueprints?: string[]
+) {
+  const actionText = action === "deploy" ? "Deploying" : "Bundling";
+
+  const formatBlueprintList = (blueprints?: string[]) => {
+    if (!blueprints?.length) return "";
+    const plural = blueprints.length > 1 ? "s" : "";
+    return `blueprint${plural} => ${blueprints.join(", ")}`;
+  };
+
+  const components = [contractPath, formatBlueprintList(blueprints)].filter(
+    Boolean
+  );
+
+  if (components.length) {
+    logger.log(`${actionText}: ${components.join(" with ")}`, false, true);
   }
 }

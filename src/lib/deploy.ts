@@ -245,7 +245,10 @@ export class DeploymentsManager {
         retry.delay
       );
 
-      await pollForProcessSpawn({ processId });
+      await pollForProcessSpawn({
+        processId,
+        gatewayUrl: services.gatewayUrl
+      });
 
       if (onBoot) {
         return { name, processId, isNewProcess, configName };

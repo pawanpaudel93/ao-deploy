@@ -42,8 +42,9 @@ function parseGatewayUrl(url: string): {
  * @param gateway - The gateway URL to connect to.
  * @returns An Arweave instance configured with the provided gateway.
  */
-export function getArweave(gateway: string) {
+export function getArweave(gateway?: string) {
   try {
+    if (!gateway) return arweave;
     const { host, port, protocol } = parseGatewayUrl(gateway);
     return Arweave.init({ host, port, protocol });
   } catch {
@@ -205,9 +206,19 @@ export function isLuaFile(fileName: string): boolean {
   return fileName.toLowerCase().endsWith(".lua");
 }
 
-export function hasValidBlueprints(blueprints: string[]): boolean {
-  if (!blueprints || !Array.isArray(blueprints)) return false;
-  return blueprints.every((blueprint) => blueprintsSet.has(blueprint));
+/**
+ * Validates if the provided blueprints array contains only valid blueprint names
+ * @param blueprints - Array of blueprint names to validate
+ * @returns boolean indicating if all blueprints are valid
+ */
+export function hasValidBlueprints(blueprints?: readonly string[]): boolean {
+  return (
+    Array.isArray(blueprints) &&
+    blueprints.length > 0 &&
+    blueprints.every((blueprint): blueprint is keyof typeof blueprintsSet =>
+      blueprintsSet.has(blueprint)
+    )
+  );
 }
 
 export function isCronPattern(cron: string): boolean {
@@ -263,9 +274,11 @@ interface PollingOptions {
 
 export async function pollForProcessSpawn({
   processId,
+  gatewayUrl,
   options = {}
 }: {
   processId: string;
+  gatewayUrl?: string;
   options?: PollingOptions;
 }): Promise<void> {
   const {
@@ -273,6 +286,8 @@ export async function pollForProcessSpawn({
     initialDelayMs = 3000,
     backoffFactor = 1.5
   } = options;
+
+  const arweave = getArweave(gatewayUrl);
 
   const queryTransaction = async () => {
     const response = await arweave.api.post("/graphql", {

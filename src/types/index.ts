@@ -42,7 +42,7 @@ export interface DeployConfig {
   /**
    * Path to contract main file
    */
-  contractPath: string;
+  contractPath?: string;
 
   /**
    * The module source to use to spin up Process
@@ -179,7 +179,7 @@ export interface BundleResult {
 
 export interface BundlingConfig {
   name: string;
-  contractPath: string;
+  contractPath?: string;
   outDir: string;
   luaPath?: string;
   minify?: boolean;

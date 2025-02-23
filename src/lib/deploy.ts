@@ -228,7 +228,6 @@ export class DeploymentsManager {
       ];
 
       if (onBoot) {
-        logActionStatus("deploy", logger, contractPath, blueprints);
         tags = [...tags, { name: "On-Boot", value: "Data" }];
       }
 

@@ -12,6 +12,7 @@ import {
   isUrl,
   jsonStringify
 } from "./utils";
+import { Wallet } from "./wallet";
 
 const __filename = fileURLToPath(import.meta.url);
 const jiti = createJITI(__filename);
@@ -126,7 +127,6 @@ export class ConfigManager {
       "name",
       "configName",
       "luaPath",
-      "wallet",
       "outDir"
     ];
     const optionalBooleanProps: (keyof DeployConfig)[] = [
@@ -162,6 +162,17 @@ export class ConfigManager {
         );
       }
     });
+
+    // Special handling for wallet which can be either a string or a JWK
+    if (
+      deployConfig.wallet &&
+      !this.#isString(deployConfig.wallet) &&
+      !Wallet.isJwk(deployConfig.wallet)
+    ) {
+      throw new Error(
+        `Invalid "wallet" value in configuration for "${keyName}": ${jsonStringify(deployConfig.wallet)}`
+      );
+    }
   }
 
   static isValidConfig(config: Config): boolean {

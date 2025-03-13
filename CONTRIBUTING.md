@@ -14,22 +14,32 @@ Thank you for considering contributing to ao-deploy! We welcome contributions fr
 
 1. **Fork the repository**: Create a personal copy of the repository on GitHub by forking it.
 2. **Create a branch**: Make sure to create a new branch for your changes. Use a descriptive name for your branch (e.g., `fix-typo`, `add-new-feature`).
-3. **Install dependencies**: Use `pnpm` to install dependencies.
+3. **Set up the correct tool versions**: This project uses a `.tool-versions` file to specify the required versions of Node.js and pnpm. We recommend using either [asdf](https://asdf-vm.com/) or [mise](https://mise.jdx.dev/) to automatically install and use the correct versions:
+
+   ```bash
+   # If using asdf
+   asdf install
+
+   # If using mise
+   mise install
+   ```
+
+4. **Install dependencies**: Use `pnpm` to install dependencies.
 
    ```bash
    pnpm install
    ```
 
-4. **Make changes**: Implement your changes in your branch.
-5. **Test your changes**: Ensure that your changes do not break any existing functionality.
+5. **Make changes**: Implement your changes in your branch.
+6. **Test your changes**: Ensure that your changes do not break any existing functionality.
 
-6. **Lint your code**: Ensure your code follows the project's coding standards.
+7. **Lint your code**: Ensure your code follows the project's coding standards.
 
    ```bash
    pnpm lint
    ```
 
-7. **Submit a pull request**: Push your changes to your forked repository and open a pull request to the main repository. Provide a clear description of the changes and why they are needed.
+8. **Submit a pull request**: Push your changes to your forked repository and open a pull request to the main repository. Provide a clear description of the changes and why they are needed.
 
 ### Development Guidelines
 

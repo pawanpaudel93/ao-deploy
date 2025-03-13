@@ -92,7 +92,8 @@ describe("deploy", () => {
       await expect(
         deployContract({
           name: "test-invalid",
-          blueprints: ["token"] // Use a valid blueprint to satisfy type check
+          // Use empty array to trigger validation failure while satisfying type check
+          blueprints: [] as unknown as import("../src/types").Blueprint[]
         })
       ).rejects.toThrow();
     });

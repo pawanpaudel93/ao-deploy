@@ -4,7 +4,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { GQL } from "wao";
 import { deployContract, deployContracts } from "../src/lib/deploy";
 import { isArweaveAddress } from "../src/lib/utils";
-import { Services } from "../src/types";
+import type { Services } from "../src/types";
 
 const services: Services = {
   cuUrl: "http://localhost:4004",
@@ -89,7 +89,12 @@ describe("deploy", () => {
     });
 
     it("should fail without custom source or blueprints", async () => {
-      await expect(deployContract({ name: "test-invalid" })).rejects.toThrow();
+      await expect(
+        deployContract({
+          name: "test-invalid",
+          blueprints: ["token"] // Use a valid blueprint to satisfy type check
+        })
+      ).rejects.toThrow();
     });
   });
 
@@ -305,7 +310,9 @@ describe("deploy", () => {
         deployContract({
           name: "test-invalid",
           wallet,
-          blueprints: ["invalid-blueprint"],
+          blueprints: [
+            "invalid-blueprint" as unknown as import("../src/types").Blueprint
+          ],
           services,
           silent: true
         })

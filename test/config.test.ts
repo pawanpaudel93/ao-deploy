@@ -17,7 +17,7 @@ describe("ConfigManager", () => {
     const validConfig = {
       test: {
         name: "test-contract",
-        blueprints: ["token"],
+        blueprints: ["token" as const],
         wallet: "./wallet.json"
       }
     };
@@ -27,8 +27,9 @@ describe("ConfigManager", () => {
   it("should reject invalid config", () => {
     const invalidConfig = {
       test: {
-        name: "test-contract"
-        // missing required fields
+        name: "test-contract",
+        // Add empty blueprints to satisfy type check but still fail validation
+        blueprints: []
       }
     };
     expect(() => ConfigManager.isValidConfig(invalidConfig)).toThrow();

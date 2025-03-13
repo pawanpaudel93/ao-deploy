@@ -37,10 +37,10 @@ jobs:
         run: npm i -g @antfu/ni
 
       - name: Install
-        run: nci
+        run: npx -p @antfu/ni nci
 
       - name: Typecheck
-        run: nr typecheck
+        run: npx -p @antfu/ni nr typecheck
 
   test:
     runs-on: ubuntu-latest

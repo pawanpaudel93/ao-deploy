@@ -1,7 +1,7 @@
-import fs from "node:fs";
-import path from "node:path";
-import os from "node:os";
 import type { JWKInterface } from "arweave/node/lib/wallet";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import { arweave } from "./utils";
 
 export class Wallet {
@@ -16,8 +16,8 @@ export class Wallet {
    * @param obj - The object to check for JWK validity.
    * @returns {boolean} True if it's a valid Arweave JWK, otherwise false.
    */
-  static isJwk(obj: any): boolean {
-    if (typeof obj !== "object") {
+  static isJwk(obj: unknown): boolean {
+    if (typeof obj !== "object" || obj === null) {
       return false;
     }
     const requiredKeys = ["n", "e", "d", "p", "q", "dp", "dq", "qi"];

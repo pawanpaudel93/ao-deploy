@@ -15,13 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
-
-      - name: Set node
-        uses: actions/setup-node@v3
-        with:
-          node-version: lts/*
+      - uses: jdx/mise-action@v2
 
       - name: Setup
         run: npm i -g @antfu/ni
@@ -37,36 +31,23 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
-
-      - name: Set node
-        uses: actions/setup-node@v3
-        with:
-          node-version: lts/*
+      - uses: jdx/mise-action@v2
 
       - name: Setup
         run: npm i -g @antfu/ni
 
       - name: Install
-        run: nci
+        run: npx -p @antfu/ni nci
 
       - name: Typecheck
-        run: nr typecheck
+        run: npx -p @antfu/ni nr typecheck
 
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 8
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "18"
-          cache: "pnpm"
+      - uses: jdx/mise-action@v2
 
       # First generate the lockfile if it doesn't exist
       - name: Install dependencies

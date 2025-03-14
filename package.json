@@ -49,6 +49,7 @@
     "release:beta": "bumpp --tag beta && npm publish --tag beta",
     "start": "esno src/index.ts",
     "test": "vitest",
+    "test:run": "vitest --run",
     "typecheck": "tsc --noEmit",
     "prepare": "simple-git-hooks",
     "prepack": "pnpm build",

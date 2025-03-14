@@ -1,5 +1,7 @@
-import { describe, expect, it } from "vitest";
+import Arweave from "arweave";
+import { assert, describe, expect, it } from "vitest";
 import { ConfigManager } from "../src/lib/config";
+import { Wallet } from "../src/lib/wallet";
 
 describe("ConfigManager", () => {
   it("should validate a correct config", () => {
@@ -8,6 +10,21 @@ describe("ConfigManager", () => {
         name: "test-contract",
         contractPath: "contract.lua",
         wallet: "./wallet.json"
+      }
+    };
+    expect(() => ConfigManager.isValidConfig(validConfig)).not.toThrow();
+  });
+
+  it("should validate with a wallet JWK", async () => {
+    const arweave = Arweave.init({});
+    const jwk = await arweave.wallets.generate();
+    assert(Wallet.isJwk(jwk));
+
+    const validConfig = {
+      test: {
+        name: "test-contract",
+        contractPath: "contract.lua",
+        wallet: jwk
       }
     };
     expect(() => ConfigManager.isValidConfig(validConfig)).not.toThrow();

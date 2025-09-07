@@ -1,119 +1,24 @@
-import * as aoconnect from "@permaweb/aoconnect";
-import pLimit from "p-limit";
-import type { AosConfig, DeployConfig, DeployResult, Services } from "../types";
-import { AOS_QUERY, APP_NAME, defaultServices } from "./constants";
-import { LuaProjectLoader } from "./loader";
-import { Logger } from "./logger";
+import { createDataItemSigner } from "@permaweb/aoconnect";
+import type { DeployConfig, DeployResult } from "../../types";
+import { APP_NAME } from "../constants";
+import { LuaProjectLoader } from "../loader";
+import { Logger } from "../logger";
 import {
-  getArweave,
   hasValidBlueprints,
   isArweaveAddress,
-  isCronPattern,
-  isUrl,
   loadBlueprints,
   logActionStatus,
   parseToInt,
   pollForProcessSpawn,
   retryWithDelay
-} from "./utils";
-import { Wallet } from "./wallet";
+} from "../utils/utils.common";
+import { Wallet } from "../wallet/wallet.node";
+import { BaseDeploymentsManager } from "./deploy.common";
 
 /**
  * Manages deployments of contracts to AO.
  */
-export class DeploymentsManager {
-  #cachedAosConfig: AosConfig | null = null;
-
-  #validateServices(services?: Services) {
-    // Validate and use provided URLs or fall back to defaults
-    const { gatewayUrl, cuUrl, muUrl } = services ?? {};
-
-    services = {
-      gatewayUrl: isUrl(gatewayUrl) ? gatewayUrl : defaultServices.gatewayUrl,
-      cuUrl: isUrl(cuUrl) ? cuUrl : defaultServices.cuUrl,
-      muUrl: isUrl(muUrl) ? muUrl : defaultServices.muUrl
-    };
-
-    return services;
-  }
-
-  #getAoInstance(services: Services) {
-    if (
-      (!services.cuUrl || services.cuUrl === defaultServices.cuUrl) &&
-      (!services.gatewayUrl ||
-        services.gatewayUrl === defaultServices.gatewayUrl) &&
-      (!services.muUrl || services.muUrl === defaultServices.muUrl)
-    ) {
-      return aoconnect;
-    }
-
-    return aoconnect.connect({
-      GATEWAY_URL: services.gatewayUrl,
-      MU_URL: services.muUrl,
-      CU_URL: services.cuUrl
-    });
-  }
-
-  async #getAosConfig() {
-    if (this.#cachedAosConfig) {
-      return this.#cachedAosConfig;
-    }
-
-    const defaultDetails = {
-      module: "cNlipBptaF9JeFAf4wUmpi43EojNanIBos3EfNrEOWo",
-      sqliteModule: "u1Ju_X8jiuq4rX9Nh-ZGRQuYQZgV2MKLMT3CZsykk54",
-      scheduler: "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA",
-      authority: "fcoN_xJeisVsPXA-trzVAuIiqO3ydLQxM-L4XbrQKzY"
-    };
-
-    try {
-      const response = await fetch(
-        "https://raw.githubusercontent.com/pawanpaudel93/ao-deploy-config/main/config.json"
-      );
-      const config = (await response.json()) as AosConfig;
-      this.#cachedAosConfig = {
-        module: config?.module || defaultDetails.module,
-        sqliteModule: config?.sqliteModule || defaultDetails.sqliteModule,
-        scheduler: config?.scheduler || defaultDetails.scheduler,
-        authority: defaultDetails.authority
-      };
-      return this.#cachedAosConfig;
-    } catch {
-      return defaultDetails;
-    }
-  }
-
-  async #findProcess(
-    name: string,
-    owner: string,
-    retry: DeployConfig["retry"],
-    gateway: string
-  ) {
-    const processId = await retryWithDelay(
-      async () => {
-        const res = await getArweave(gateway).api.post("/graphql", {
-          query: AOS_QUERY,
-          variables: { owners: [owner], names: [name] }
-        });
-        if (!res.ok || res?.data?.data === null) {
-          throw new Error(`(${res.status}) ${res.statusText} - GraphQL ERROR`);
-        }
-        return res?.data?.data?.transactions?.edges?.[0]?.node?.id;
-      },
-      retry?.count,
-      retry?.delay
-    );
-
-    return processId;
-  }
-
-  #validateCron(cron: string) {
-    const isCronValid = isCronPattern(cron);
-    if (!isCronValid) {
-      throw new Error("Invalid cron flag!");
-    }
-  }
-
+export class DeploymentsManager extends BaseDeploymentsManager {
   /**
    * Deploys or updates a contract on AO.
    * @param {DeployConfig} deployConfig - Configuration options for the deployment.
@@ -148,7 +53,7 @@ export class DeploymentsManager {
     };
 
     const logger = new Logger(configName, silent);
-    const aosConfig = await this.#getAosConfig();
+    const aosConfig = await this.getAosConfig();
     module = isArweaveAddress(module)
       ? module!
       : sqlite
@@ -158,11 +63,11 @@ export class DeploymentsManager {
 
     const walletInstance = await Wallet.load(wallet);
     const owner = await walletInstance.getAddress();
-    const signer = aoconnect.createDataItemSigner(walletInstance.jwk);
-    services = this.#validateServices(services);
+    const signer = createDataItemSigner(walletInstance.jwk);
+    services = this.validateServices(services);
 
     // Initialize the AO instance with validated URLs
-    const aoInstance = this.#getAoInstance(services);
+    const aoInstance = this.getAoInstance(services);
 
     logActionStatus("deploy", logger, contractPath, blueprints);
 
@@ -172,7 +77,7 @@ export class DeploymentsManager {
       !forceSpawn &&
       (!processId || (processId && !isArweaveAddress(processId)))
     ) {
-      processId = await this.#findProcess(
+      processId = await this.findProcess(
         name,
         owner,
         retry,
@@ -232,7 +137,7 @@ export class DeploymentsManager {
       }
 
       if (cron) {
-        this.#validateCron(cron);
+        this.validateCron(cron);
         tags = [
           ...tags,
           { name: "Cron-Interval", value: cron },
@@ -246,6 +151,10 @@ export class DeploymentsManager {
         retry.count,
         retry.delay
       );
+
+      if (!processId) {
+        throw new Error("Failed to spawn process");
+      }
 
       await pollForProcessSpawn({
         processId,
@@ -309,24 +218,6 @@ export class DeploymentsManager {
       isNewProcess,
       configName
     };
-  }
-
-  /**
-   * Deploys multiple contracts concurrently with specified concurrency limits.
-   * @param {DeployConfig[]} deployConfigs - Array of deployment configurations.
-   * @param {number} concurrency - Maximum number of deployments to run concurrently. Default is 5.
-   * @returns {Promise<PromiseSettledResult<DeployResult>[]>} Array of results for each deployment, either fulfilled or rejected.
-   */
-  async deployContracts(
-    deployConfigs: DeployConfig[],
-    concurrency: number = 5
-  ): Promise<PromiseSettledResult<DeployResult>[]> {
-    const limit = pLimit(concurrency);
-    const promises = deployConfigs.map((config) =>
-      limit(() => deployContract(config))
-    );
-    const results = await Promise.allSettled(promises);
-    return results;
   }
 }
 

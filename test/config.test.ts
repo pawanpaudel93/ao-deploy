@@ -1,7 +1,7 @@
 import Arweave from "arweave";
 import { assert, describe, expect, it } from "vitest";
 import { ConfigManager } from "../src/lib/config";
-import { Wallet } from "../src/lib/wallet";
+import { Wallet } from "../src/lib/wallet/wallet.node";
 
 describe("ConfigManager", () => {
   it("should validate a correct config", () => {

@@ -2,7 +2,7 @@ import type { JWKInterface } from "arweave/node/lib/wallet";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { arweave } from "./utils";
+import { arweave } from "../utils/utils.common";
 
 export class Wallet {
   #jwk: JWKInterface;

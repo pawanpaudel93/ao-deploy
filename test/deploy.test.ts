@@ -2,8 +2,8 @@ import Arweave from "arweave";
 import type { JWKInterface } from "arweave/node/lib/wallet";
 import { beforeAll, describe, expect, it } from "vitest";
 import { GQL } from "wao";
-import { deployContract, deployContracts } from "../src/lib/deploy";
-import { isArweaveAddress } from "../src/lib/utils";
+import { deployContract, deployContracts } from "../src/lib/deploy/deploy.node";
+import { isArweaveAddress } from "../src/lib/utils/utils.common";
 import type { Services } from "../src/types";
 
 const services: Services = {

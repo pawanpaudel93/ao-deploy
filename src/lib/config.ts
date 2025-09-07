@@ -11,8 +11,8 @@ import {
   isLuaFile,
   isUrl,
   jsonStringify
-} from "./utils";
-import { Wallet } from "./wallet";
+} from "./utils/utils.common";
+import { Wallet } from "./wallet/wallet.node";
 
 const __filename = fileURLToPath(import.meta.url);
 const jiti = createJITI(__filename);

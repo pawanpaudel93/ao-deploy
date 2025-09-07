@@ -7,7 +7,7 @@ const version = JSON.parse(
   readFileSync("./package.json", { encoding: "utf-8" })
 ).version;
 
-const paths = ["./cli.mjs", "index.cjs", "index.mjs"];
+const paths = ["./cli.mjs", "index.cjs", "index.mjs", "index.web.mjs"];
 
 export async function checkPath(path: PathLike): Promise<boolean> {
   return fs.promises

@@ -8,11 +8,11 @@ import {
   hasValidBlueprints,
   isArweaveAddress,
   isCronPattern,
+  isJwk,
   isLuaFile,
   isUrl,
   jsonStringify
 } from "./utils/utils.common";
-import { Wallet } from "./wallet/wallet.node";
 
 const __filename = fileURLToPath(import.meta.url);
 const jiti = createJITI(__filename);
@@ -167,7 +167,7 @@ export class ConfigManager {
     if (
       deployConfig.wallet &&
       !this.#isString(deployConfig.wallet) &&
-      !Wallet.isJwk(deployConfig.wallet)
+      !isJwk(deployConfig.wallet)
     ) {
       throw new Error(
         `Invalid "wallet" value in configuration for "${keyName}": ${jsonStringify(deployConfig.wallet)}`

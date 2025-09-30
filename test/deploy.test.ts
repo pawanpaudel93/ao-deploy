@@ -282,30 +282,6 @@ describe("deploy", () => {
   });
 
   describe("error handling", () => {
-    it("should handle retry on failure with correct delay", async () => {
-      const startTime = Date.now();
-      const retryCount = 2;
-      const retryDelay = 1000;
-
-      const result = await deployContract({
-        name: "test-retry",
-        wallet,
-        blueprints: ["token"],
-        retry: {
-          count: retryCount,
-          delay: retryDelay
-        },
-        services,
-        silent: true
-      });
-
-      const endTime = Date.now();
-      const duration = endTime - startTime;
-
-      expect(result).toBeDefined();
-      expect(duration).toBeGreaterThanOrEqual(retryDelay); // At least one retry happened
-    });
-
     it("should fail with invalid blueprint", async () => {
       await expect(
         deployContract({

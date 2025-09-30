@@ -1,7 +1,7 @@
 import Arweave from "arweave";
 import { assert, describe, expect, it } from "vitest";
 import { ConfigManager } from "../src/lib/config";
-import { Wallet } from "../src/lib/wallet/wallet.node";
+import { isJwk } from "../src/lib/utils/utils.common";
 
 describe("ConfigManager", () => {
   it("should validate a correct config", () => {
@@ -18,7 +18,7 @@ describe("ConfigManager", () => {
   it("should validate with a wallet JWK", async () => {
     const arweave = Arweave.init({});
     const jwk = await arweave.wallets.generate();
-    assert(Wallet.isJwk(jwk));
+    assert(isJwk(jwk));
 
     const validConfig = {
       test: {

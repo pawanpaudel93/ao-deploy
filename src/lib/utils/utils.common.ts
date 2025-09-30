@@ -6,6 +6,8 @@ import { Logger } from "../logger";
 // @ts-expect-error - Arweave may be a default or named export depending on environment
 const ArweaveClass = Arweave?.default || Arweave;
 
+const AUTH_REQUEST_ERROR_MESSAGE = "User cancelled the AuthRequest";
+
 /**
  * Initializes a default Arweave instance.
  */
@@ -77,9 +79,13 @@ export async function retryWithDelay<T>(
   const attempt = async (): Promise<T> => {
     try {
       return await fn();
-    } catch (error) {
+    } catch (error: any) {
+      const errorMessage = error?.message || String(error);
       attempts += 1;
-      if (attempts < maxAttempts) {
+      if (
+        attempts < maxAttempts &&
+        !errorMessage.includes(AUTH_REQUEST_ERROR_MESSAGE)
+      ) {
         const currentDelay = getDelay(attempts);
         // console.log(`Attempt ${attempts} failed, retrying...`)
         return new Promise<T>((resolve) =>
@@ -334,4 +340,28 @@ export function logActionStatus(
   if (components.length) {
     logger.log(`${actionText}: ${components.join(" with ")}`, false, true);
   }
+}
+
+/**
+ * Check if the passed argument is a valid JSON Web Key (JWK) for Arweave.
+ * @param obj - The object to check for JWK validity.
+ * @returns {boolean} True if it's a valid Arweave JWK, otherwise false.
+ */
+export function isJwk(obj: unknown): boolean {
+  try {
+    if (typeof obj !== "object" || obj === null) return false;
+
+    const requiredKeys = ["n", "e", "d", "p", "q", "dp", "dq", "qi"];
+    return requiredKeys.every((key) => key in obj);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Checks if running in browser environment.
+ * @returns True if in browser, false otherwise.
+ */
+export function isBrowserEnv() {
+  return typeof window !== "undefined";
 }

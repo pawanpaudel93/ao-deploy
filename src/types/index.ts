@@ -183,6 +183,8 @@ export type DeployConfig = {
     }
 );
 
+export type WebDeployConfig = Omit<DeployConfig, "wallet" | "contractPath">;
+
 export type Config = Record<ConfigName, DeployConfig>;
 
 export interface DeployResult {

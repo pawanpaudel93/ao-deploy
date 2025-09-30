@@ -17,10 +17,13 @@ export default defineBuildConfig([
     entries: ["src/index.web"],
     declaration: true,
     clean: true,
-    // outDir: "dist/web",
+    sourcemap: true,
     rollup: {
       emitCJS: false,
-      inlineDependencies: true
+      inlineDependencies: true,
+      esbuild: {
+        minify: true
+      }
     },
     failOnWarn: false
   },

@@ -42,11 +42,6 @@
         "require": "./dist/index.cjs"
       }
     },
-    "./node": {
-      "types": "./dist/index.node.d.ts",
-      "import": "./dist/index.node.mjs",
-      "require": "./dist/index.node.cjs"
-    },
     "./web": {
       "types": "./dist/index.web.d.ts",
       "import": "./dist/index.web.mjs"

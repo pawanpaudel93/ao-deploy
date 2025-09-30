@@ -183,7 +183,10 @@ export type DeployConfig = {
     }
 );
 
-export type WebDeployConfig = Omit<DeployConfig, "wallet" | "contractPath">;
+export type WebDeployConfig = Omit<
+  DeployConfig,
+  "wallet" | "contractPath" | "luaPath"
+>;
 
 export type Config = Record<ConfigName, DeployConfig>;
 

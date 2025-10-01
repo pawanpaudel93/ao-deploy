@@ -21,9 +21,9 @@ import { minifyLuaCode } from "./minify";
 import {
   hasValidBlueprints,
   loadBlueprints,
-  logActionStatus,
-  writeFileToProjectDir
-} from "./utils";
+  logActionStatus
+} from "./utils/utils.common";
+import { writeFileToProjectDir } from "./utils/utils.node";
 
 const execAsync = util.promisify(exec);
 

@@ -1,9 +1,14 @@
-import * as aoconnect from "@permaweb/aoconnect";
+import { connect, createDataItemSigner } from "@permaweb/aoconnect";
 import pLimit from "p-limit";
-import type { AosConfig, DeployConfig, DeployResult, Services } from "../types";
-import { AOS_QUERY, APP_NAME, defaultServices } from "./constants";
-import { LuaProjectLoader } from "./loader";
-import { Logger } from "./logger";
+import type {
+  AosConfig,
+  DeployConfig,
+  DeployResult,
+  Services
+} from "../../types";
+import { AOS_QUERY, APP_NAME, defaultServices } from "../constants";
+import { Logger } from "../logger";
+import { minifyLuaCode } from "../minify";
 import {
   getArweave,
   hasValidBlueprints,
@@ -15,16 +20,16 @@ import {
   parseToInt,
   pollForProcessSpawn,
   retryWithDelay
-} from "./utils";
-import { Wallet } from "./wallet";
+} from "../utils/utils.common";
+import { WalletInterface } from "../wallet/wallet.types";
 
 /**
  * Manages deployments of contracts to AO.
  */
-export class DeploymentsManager {
-  #cachedAosConfig: AosConfig | null = null;
+export class BaseDeploymentsManager {
+  protected cachedAosConfig: AosConfig | null = null;
 
-  #validateServices(services?: Services) {
+  protected validateServices(services?: Services) {
     // Validate and use provided URLs or fall back to defaults
     const { gatewayUrl, cuUrl, muUrl } = services ?? {};
 
@@ -37,26 +42,27 @@ export class DeploymentsManager {
     return services;
   }
 
-  #getAoInstance(services: Services) {
+  protected getAoInstance(services: Services): any {
     if (
       (!services.cuUrl || services.cuUrl === defaultServices.cuUrl) &&
       (!services.gatewayUrl ||
         services.gatewayUrl === defaultServices.gatewayUrl) &&
       (!services.muUrl || services.muUrl === defaultServices.muUrl)
     ) {
-      return aoconnect;
+      return connect({ MODE: "legacy" });
     }
 
-    return aoconnect.connect({
+    return connect({
+      MODE: "legacy",
       GATEWAY_URL: services.gatewayUrl,
       MU_URL: services.muUrl,
       CU_URL: services.cuUrl
     });
   }
 
-  async #getAosConfig() {
-    if (this.#cachedAosConfig) {
-      return this.#cachedAosConfig;
+  protected async getAosConfig() {
+    if (this.cachedAosConfig) {
+      return this.cachedAosConfig;
     }
 
     const defaultDetails = {
@@ -71,19 +77,19 @@ export class DeploymentsManager {
         "https://raw.githubusercontent.com/pawanpaudel93/ao-deploy-config/main/config.json"
       );
       const config = (await response.json()) as AosConfig;
-      this.#cachedAosConfig = {
+      this.cachedAosConfig = {
         module: config?.module || defaultDetails.module,
         sqliteModule: config?.sqliteModule || defaultDetails.sqliteModule,
         scheduler: config?.scheduler || defaultDetails.scheduler,
         authority: defaultDetails.authority
       };
-      return this.#cachedAosConfig;
+      return this.cachedAosConfig;
     } catch {
       return defaultDetails;
     }
   }
 
-  async #findProcess(
+  protected async findProcess(
     name: string,
     owner: string,
     retry: DeployConfig["retry"],
@@ -107,28 +113,23 @@ export class DeploymentsManager {
     return processId;
   }
 
-  #validateCron(cron: string) {
+  protected validateCron(cron: string) {
     const isCronValid = isCronPattern(cron);
     if (!isCronValid) {
       throw new Error("Invalid cron flag!");
     }
   }
 
-  /**
-   * Deploys or updates a contract on AO.
-   * @param {DeployConfig} deployConfig - Configuration options for the deployment.
-   * @returns {Promise<DeployResult>} The result of the deployment.
-   */
-  async deployContract({
+  protected async _deployContract({
     name,
-    wallet,
+    wallet: walletInstance,
     contractPath,
+    getContractSource,
     tags,
     cron,
     module,
     scheduler,
     retry,
-    luaPath,
     configName,
     processId,
     sqlite,
@@ -139,7 +140,10 @@ export class DeploymentsManager {
     blueprints,
     silent = false,
     forceSpawn = false
-  }: DeployConfig): Promise<DeployResult> {
+  }: Omit<DeployConfig, "wallet"> & {
+    getContractSource: () => Promise<string>;
+    wallet: WalletInterface;
+  }): Promise<DeployResult> {
     name = name || "default";
     configName = configName || name;
     retry = {
@@ -148,7 +152,7 @@ export class DeploymentsManager {
     };
 
     const logger = new Logger(configName, silent);
-    const aosConfig = await this.#getAosConfig();
+    const aosConfig = await this.getAosConfig();
     module = isArweaveAddress(module)
       ? module!
       : sqlite
@@ -156,15 +160,20 @@ export class DeploymentsManager {
         : aosConfig.module;
     scheduler = isArweaveAddress(scheduler) ? scheduler! : aosConfig.scheduler;
 
-    const walletInstance = await Wallet.load(wallet);
     const owner = await walletInstance.getAddress();
-    const signer = aoconnect.createDataItemSigner(walletInstance.jwk);
-    services = this.#validateServices(services);
+
+    const signer = createDataItemSigner(walletInstance.signer);
+    services = this.validateServices(services);
 
     // Initialize the AO instance with validated URLs
-    const aoInstance = this.#getAoInstance(services);
+    const aoInstance = this.getAoInstance(services);
 
-    logActionStatus("deploy", logger, contractPath, blueprints);
+    logActionStatus(
+      "deploy",
+      logger,
+      contractPath || "provided contract source",
+      blueprints
+    );
 
     let isNewProcess = forceSpawn;
 
@@ -172,7 +181,7 @@ export class DeploymentsManager {
       !forceSpawn &&
       (!processId || (processId && !isArweaveAddress(processId)))
     ) {
-      processId = await this.#findProcess(
+      processId = await this.findProcess(
         name,
         owner,
         retry,
@@ -181,22 +190,18 @@ export class DeploymentsManager {
       isNewProcess = !processId;
     }
 
-    let contractSrc = "";
+    let contractSrc = (await getContractSource()) || "";
+
     let blueprintsSrc = "";
 
-    if (!contractPath && !hasValidBlueprints(blueprints)) {
+    if (!contractSrc && !hasValidBlueprints(blueprints)) {
       throw new Error(
-        "Please provide either a valid contract path or blueprints."
+        "Please provide a contract path, source code, or blueprints."
       );
     }
 
     if (Array.isArray(blueprints) && blueprints.length > 0) {
       blueprintsSrc = await loadBlueprints(blueprints);
-    }
-
-    const loader = new LuaProjectLoader(configName, luaPath, silent);
-    if (contractPath) {
-      contractSrc = await loader.loadContract(contractPath);
     }
 
     if (blueprintsSrc || contractSrc) {
@@ -213,7 +218,7 @@ export class DeploymentsManager {
 
     if (minify) {
       logger.log("Minifying contract...", false, false);
-      contractSrc = await loader.minifyContract(contractSrc);
+      contractSrc = await minifyLuaCode(contractSrc);
     }
 
     if (isNewProcess) {
@@ -232,7 +237,7 @@ export class DeploymentsManager {
       }
 
       if (cron) {
-        this.#validateCron(cron);
+        this.validateCron(cron);
         tags = [
           ...tags,
           { name: "Cron-Interval", value: cron },
@@ -247,8 +252,12 @@ export class DeploymentsManager {
         retry.delay
       );
 
+      if (!processId) {
+        throw new Error("Failed to spawn process");
+      }
+
       await pollForProcessSpawn({
-        processId,
+        processId: processId!,
         gatewayUrl: services.gatewayUrl
       });
 
@@ -312,6 +321,16 @@ export class DeploymentsManager {
   }
 
   /**
+   * Deploys or updates a contract on AO.
+   * @param {DeployConfig} deployConfig - Configuration options for the deployment.
+   * @returns {Promise<DeployResult>} The result of the deployment.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async deployContract(_deployConfig: DeployConfig): Promise<DeployResult> {
+    throw new Error("Not implemented");
+  }
+
+  /**
    * Deploys multiple contracts concurrently with specified concurrency limits.
    * @param {DeployConfig[]} deployConfigs - Array of deployment configurations.
    * @param {number} concurrency - Maximum number of deployments to run concurrently. Default is 5.
@@ -323,35 +342,9 @@ export class DeploymentsManager {
   ): Promise<PromiseSettledResult<DeployResult>[]> {
     const limit = pLimit(concurrency);
     const promises = deployConfigs.map((config) =>
-      limit(() => deployContract(config))
+      limit(() => this.deployContract(config))
     );
     const results = await Promise.allSettled(promises);
     return results;
   }
-}
-
-/**
- * Deploys or updates a contract on AO.
- * @param {DeployConfig} deployConfig - Configuration options for the deployment.
- * @returns {Promise<DeployResult>} The result of the deployment.
- */
-export async function deployContract(
-  deployConfig: DeployConfig
-): Promise<DeployResult> {
-  const manager = new DeploymentsManager();
-  return manager.deployContract(deployConfig);
-}
-
-/**
- * Deploys multiple contracts concurrently with specified concurrency limits.
- * @param {DeployConfig[]} deployConfigs - Array of deployment configurations.
- * @param {number} concurrency - Maximum number of deployments to run concurrently. Default is 5.
- * @returns {Promise<PromiseSettledResult<DeployResult>[]>} Array of results for each deployment, either fulfilled or rejected.
- */
-export async function deployContracts(
-  deployConfigs: DeployConfig[],
-  concurrency: number = 5
-): Promise<PromiseSettledResult<DeployResult>[]> {
-  const manager = new DeploymentsManager();
-  return manager.deployContracts(deployConfigs, concurrency);
 }

@@ -15,5 +15,10 @@
     "no-console": "off",
     "prettier/prettier": "error",
     "@typescript-eslint/no-explicit-any": "off"
-  }
+  },
+  "ignorePatterns": [
+    "*.json",
+    "dist/**/*",
+    "node_modules/**/*"
+  ]
 }

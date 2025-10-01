@@ -5,7 +5,7 @@ import {
   isLuaFile,
   isUrl,
   parseToInt
-} from "../src/lib/utils";
+} from "../src/lib/utils/utils.common";
 
 describe("Utils", () => {
   describe("isLuaFile", () => {

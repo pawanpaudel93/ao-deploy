@@ -1,4 +1,4 @@
-import { getUserPkgManager } from "./utils";
+import { getUserPkgManager } from "./utils/utils.common";
 
 let luamin: any;
 

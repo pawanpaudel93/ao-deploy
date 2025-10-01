@@ -154,6 +154,9 @@ export type DeployConfig = {
        * Path to contract main file
        */
       contractPath: string;
+
+      contractSrc?: string;
+
       /**
        * Blueprints to use for deployment
        */
@@ -161,12 +164,29 @@ export type DeployConfig = {
     }
   | {
       contractPath?: string;
+
+      contractSrc?: string;
+
       /**
        * Blueprints to use for deployment
        */
       blueprints: Blueprint[];
     }
+  | {
+      contractPath?: string;
+
+      contractSrc: string;
+      /**
+       * Blueprints to use for deployment
+       */
+      blueprints?: Blueprint[];
+    }
 );
+
+export type WebDeployConfig = Omit<
+  DeployConfig,
+  "wallet" | "contractPath" | "luaPath"
+>;
 
 export type Config = Record<ConfigName, DeployConfig>;
 

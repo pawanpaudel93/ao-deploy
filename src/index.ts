@@ -1,2 +1,2 @@
-export * from "./lib/deploy";
 export { defineConfig } from "./lib/config";
+export * from "./lib/deploy/deploy.node";

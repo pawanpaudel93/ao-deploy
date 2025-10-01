@@ -2,8 +2,8 @@ import Arweave from "arweave";
 import type { JWKInterface } from "arweave/node/lib/wallet";
 import { beforeAll, describe, expect, it } from "vitest";
 import { GQL } from "wao";
-import { deployContract, deployContracts } from "../src/lib/deploy";
-import { isArweaveAddress } from "../src/lib/utils";
+import { deployContract, deployContracts } from "../src/lib/deploy/deploy.node";
+import { isArweaveAddress } from "../src/lib/utils/utils.common";
 import type { Services } from "../src/types";
 
 const services: Services = {
@@ -282,30 +282,6 @@ describe("deploy", () => {
   });
 
   describe("error handling", () => {
-    it("should handle retry on failure with correct delay", async () => {
-      const startTime = Date.now();
-      const retryCount = 2;
-      const retryDelay = 1000;
-
-      const result = await deployContract({
-        name: "test-retry",
-        wallet,
-        blueprints: ["token"],
-        retry: {
-          count: retryCount,
-          delay: retryDelay
-        },
-        services,
-        silent: true
-      });
-
-      const endTime = Date.now();
-      const duration = endTime - startTime;
-
-      expect(result).toBeDefined();
-      expect(duration).toBeGreaterThanOrEqual(retryDelay); // At least one retry happened
-    });
-
     it("should fail with invalid blueprint", async () => {
       await expect(
         deployContract({

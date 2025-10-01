@@ -8,17 +8,17 @@ import process, { emitWarning } from "node:process";
 import { fileURLToPath } from "node:url";
 import { ConfigManager } from "./lib/config";
 import { aoExplorerUrl } from "./lib/constants";
-import { deployContract, deployContracts } from "./lib/deploy";
+import { deployContract, deployContracts } from "./lib/deploy/deploy.node";
 import { BuildError, DeployError } from "./lib/error";
 import { loadAndBundleContracts } from "./lib/loader";
 import { Logger } from "./lib/logger";
 import {
-  clearBuildOutDir,
   hasValidBlueprints,
   isLuaFile,
   parseToInt,
   parseUrl
-} from "./lib/utils";
+} from "./lib/utils/utils.common";
+import { clearBuildOutDir } from "./lib/utils/utils.node";
 import type { BundleResult, BundlingConfig, DeployResult, Tag } from "./types";
 
 const PKG_ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "../");

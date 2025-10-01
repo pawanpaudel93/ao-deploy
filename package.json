@@ -26,8 +26,11 @@
   "sideEffects": false,
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
       "browser": {
+        "types": "./dist/index.web.d.ts",
+        "import": "./dist/index.web.mjs"
+      },
+      "webpack": {
         "types": "./dist/index.web.d.ts",
         "import": "./dist/index.web.mjs"
       },
@@ -42,6 +45,11 @@
         "require": "./dist/index.cjs"
       }
     },
+    "./node": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
     "./web": {
       "types": "./dist/index.web.d.ts",
       "import": "./dist/index.web.mjs"
@@ -53,12 +61,11 @@
   "browser": "./dist/index.web.mjs",
   "typesVersions": {
     "*": {
-      "*": [
-        "./dist/*",
-        "./dist/index.d.ts"
-      ],
       "web": [
         "./dist/index.web.d.ts"
+      ],
+      ".": [
+        "./dist/index.d.ts"
       ]
     }
   },

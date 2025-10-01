@@ -190,12 +190,11 @@ export class BaseDeploymentsManager {
       isNewProcess = !processId;
     }
 
-    const contractSrc = await getContractSource();
+    let contractSrc = (await getContractSource()) || "";
 
-    let contractSource = contractSrc || "";
     let blueprintsSrc = "";
 
-    if (!contractSource && !hasValidBlueprints(blueprints)) {
+    if (!contractSrc && !hasValidBlueprints(blueprints)) {
       throw new Error(
         "Please provide either contract source code or blueprints."
       );
@@ -205,8 +204,8 @@ export class BaseDeploymentsManager {
       blueprintsSrc = await loadBlueprints(blueprints);
     }
 
-    if (blueprintsSrc || contractSource) {
-      contractSource = [blueprintsSrc, contractSource]
+    if (blueprintsSrc || contractSrc) {
+      contractSrc = [blueprintsSrc, contractSrc]
         .filter(Boolean)
         .join("\n\n")
         .trim();
@@ -214,12 +213,12 @@ export class BaseDeploymentsManager {
 
     if (contractTransformer && typeof contractTransformer === "function") {
       logger.log("Transforming contract...", false, false);
-      contractSource = await contractTransformer(contractSource);
+      contractSrc = await contractTransformer(contractSrc);
     }
 
     if (minify) {
       logger.log("Minifying contract...", false, false);
-      contractSource = await minifyLuaCode(contractSource);
+      contractSrc = await minifyLuaCode(contractSrc);
     }
 
     if (isNewProcess) {
@@ -246,7 +245,7 @@ export class BaseDeploymentsManager {
         ];
       }
 
-      const data = onBoot ? contractSource : "1984";
+      const data = onBoot ? contractSrc : "1984";
       processId = await retryWithDelay(
         () => aoInstance.spawn({ module, signer, tags, data, scheduler }),
         retry.count,
@@ -278,7 +277,7 @@ export class BaseDeploymentsManager {
           aoInstance.message({
             process: processId!,
             tags: [{ name: "Action", value: "Eval" }],
-            data: contractSource,
+            data: contractSrc,
             signer
           }),
         retry.count,

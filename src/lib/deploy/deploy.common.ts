@@ -196,7 +196,7 @@ export class BaseDeploymentsManager {
 
     if (!contractSrc && !hasValidBlueprints(blueprints)) {
       throw new Error(
-        "Please provide either contract source code or blueprints."
+        "Please provide a contract path, source code, or blueprints."
       );
     }
 

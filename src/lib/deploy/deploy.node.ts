@@ -21,8 +21,8 @@ export class DeploymentsManager extends BaseDeploymentsManager {
     const walletInstance = await Wallet.load(jwkOrPath);
 
     const getContractSource = async () => {
-      if (!deployConfig.contractPath) return "";
       if (deployConfig.contractSrc) return deployConfig.contractSrc;
+      if (!deployConfig.contractPath) return "";
 
       const loader = new LuaProjectLoader(
         configName,

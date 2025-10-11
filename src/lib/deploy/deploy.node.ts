@@ -34,11 +34,24 @@ export class DeploymentsManager extends BaseDeploymentsManager {
     };
 
     try {
-      return await this._deployContract({
+      const result = await this._deployContract({
         ...deployConfig,
         wallet: walletInstance,
         getContractSource
       });
+
+      // Mark deployment as successful
+      if (walletInstance.signer?.constructor?.name === "BrowserWalletSigner") {
+        walletInstance.signer.markComplete("success");
+      }
+
+      return result;
+    } catch (error) {
+      // Mark deployment as failed
+      if (walletInstance.signer?.constructor?.name === "BrowserWalletSigner") {
+        walletInstance.signer.markComplete("failed");
+      }
+      throw error;
     } finally {
       // Clean up browser signer if used
       await walletInstance.close();

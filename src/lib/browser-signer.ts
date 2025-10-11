@@ -28,6 +28,7 @@ export class BrowserWalletSigner {
     { resolve: (value: any) => void; reject: (error: Error) => void }
   > = new Map();
   private address: string | null = null;
+  private connections: Set<any> = new Set();
 
   /**
    * Start the local server and open browser
@@ -36,6 +37,14 @@ export class BrowserWalletSigner {
     return new Promise((resolve, reject) => {
       this.server = http.createServer((req, res) => {
         this.handleRequest(req, res);
+      });
+
+      // Track connections for clean shutdown
+      this.server.on("connection", (conn) => {
+        this.connections.add(conn);
+        conn.on("close", () => {
+          this.connections.delete(conn);
+        });
       });
 
       // Listen on a random available port
@@ -81,16 +90,13 @@ export class BrowserWalletSigner {
     if (req.method === "POST" && req.url === "/poll") {
       // Long polling endpoint for getting signing requests
       // Return pending request if any, otherwise wait
-      console.log(
-        `📍 /poll called, pendingRequests size: ${this.pendingRequests.size}`
-      );
       const request = Array.from(this.pendingRequests.entries())[0];
       if (request) {
         const [id, value] = request;
-        console.log(`📍 Found pending request: ${id}`);
+        // console.log(`📍 Found pending request: ${id}`);
         const requestData = (value as any).data;
         if (requestData) {
-          console.log(`📍 Request has data, type: ${requestData.type}`);
+          // console.log(`📍 Request has data, type: ${requestData.type}`);
           res.writeHead(200, { "Content-Type": "application/json" });
           res.end(
             JSON.stringify({
@@ -285,31 +291,40 @@ export class BrowserWalletSigner {
    * Notify browser that deployment is complete
    */
   private deploymentComplete = false;
+  private deploymentStatus: "success" | "failed" | null = null;
 
   /**
    * Mark deployment as complete and notify browser
    */
-  markComplete(): void {
+  markComplete(status: "success" | "failed" = "success"): void {
     this.deploymentComplete = true;
-    console.log("\n✅ Deployment complete, notifying browser...");
+    this.deploymentStatus = status;
   }
 
   /**
    * Cleanup and close server
    */
   async close(): Promise<void> {
-    this.markComplete();
+    if (!this.server) return;
 
-    // Give browser time to receive completion message
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // Mark as complete if not already marked (defaults to success)
+    if (!this.deploymentComplete) {
+      this.markComplete("success");
+    }
 
+    // Give browser a moment to receive completion message, then force close
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    // Destroy all active connections
+    for (const conn of this.connections) {
+      conn.destroy();
+    }
+    this.connections.clear();
+
+    // Close server
     if (this.server) {
-      return new Promise((resolve) => {
-        this.server!.close(() => {
-          console.log("✅ Browser wallet signer closed");
-          resolve();
-        });
-      });
+      this.server.close();
+      this.server = null;
     }
   }
 
@@ -614,9 +629,15 @@ export class BrowserWalletSigner {
 
                     // Check if deployment is complete
                     if (request.completed) {
-                        log('✅ Deployment complete!', 'success');
-                        document.getElementById('status').className = 'status connected';
-                        document.getElementById('status').innerHTML = '✅ Deployment complete! You can close this window.';
+                        if (request.status === 'success') {
+                            log('✅ Deployment successful!', 'success');
+                            document.getElementById('status').className = 'status connected';
+                            document.getElementById('status').innerHTML = '✅ Deployment complete! You can close this window.';
+                        } else {
+                            log('❌ Deployment failed!', 'error');
+                            document.getElementById('status').className = 'status error';
+                            document.getElementById('status').innerHTML = '❌ Deployment failed. Check your CLI for details.';
+                        }
                         connected = false; // Stop polling
                         break;
                     }

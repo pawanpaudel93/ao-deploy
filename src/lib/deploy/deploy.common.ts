@@ -294,6 +294,14 @@ export class BaseDeploymentsManager {
         retry.delay
       );
 
+      // Close browser wallet signer after message is sent (all signatures obtained)
+      if (
+        (walletInstance as any).signer?.constructor?.name ===
+        "BrowserWalletSigner"
+      ) {
+        await (walletInstance as any).close();
+      }
+
       const { Output, Error: error } = await retryWithDelay(
         async () =>
           aoInstance.result({

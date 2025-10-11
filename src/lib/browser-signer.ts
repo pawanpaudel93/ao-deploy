@@ -29,6 +29,9 @@ export class BrowserWalletSigner {
   > = new Map();
   private address: string | null = null;
   private connections: Set<any> = new Set();
+  private browserConnected: boolean = false;
+  private lastHeartbeat: number = Date.now();
+  private heartbeatInterval: NodeJS.Timeout | null = null;
 
   /**
    * Start the local server and open browser
@@ -58,11 +61,36 @@ export class BrowserWalletSigner {
 
         // Open browser
         this.openBrowser(`http://localhost:${this.port}`);
+
+        // Start heartbeat checker
+        this.startHeartbeatChecker();
+
         resolve();
       });
 
       this.server.on("error", reject);
     });
+  }
+
+  /**
+   * Start checking for browser heartbeat
+   */
+  private startHeartbeatChecker(): void {
+    this.heartbeatInterval = setInterval(() => {
+      const timeSinceLastHeartbeat = Date.now() - this.lastHeartbeat;
+
+      // If no heartbeat for 10 seconds and browser was connected, it's disconnected
+      if (this.browserConnected && timeSinceLastHeartbeat > 10000) {
+        console.log("\n❌ Browser connection lost - tab may have been closed");
+        this.browserConnected = false;
+
+        // Reject all pending requests
+        for (const [id, pending] of this.pendingRequests.entries()) {
+          pending.reject(new Error("Browser tab closed - signing cancelled"));
+          this.pendingRequests.delete(id);
+        }
+      }
+    }, 2000); // Check every 2 seconds
   }
 
   /**
@@ -88,6 +116,25 @@ export class BrowserWalletSigner {
     }
 
     if (req.method === "POST" && req.url === "/poll") {
+      // Update heartbeat - browser is alive
+      this.lastHeartbeat = Date.now();
+      if (!this.browserConnected) {
+        this.browserConnected = true;
+      }
+
+      // Check if deployment is complete
+      if (this.deploymentComplete) {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            id: null,
+            completed: true,
+            status: this.deploymentStatus
+          })
+        );
+        return;
+      }
+
       // Long polling endpoint for getting signing requests
       // Return pending request if any, otherwise wait
       const request = Array.from(this.pendingRequests.entries())[0];
@@ -304,12 +351,18 @@ export class BrowserWalletSigner {
   /**
    * Cleanup and close server
    */
-  async close(): Promise<void> {
+  async close(status: "success" | "failed" = "success"): Promise<void> {
     if (!this.server) return;
 
     // Mark as complete if not already marked (defaults to success)
     if (!this.deploymentComplete) {
-      this.markComplete("success");
+      this.markComplete(status);
+    }
+
+    // Stop heartbeat checker
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
     }
 
     // Give browser a moment to receive completion message, then force close

@@ -81,9 +81,9 @@ export class Wallet implements WalletInterface {
     return this.#jwk!;
   }
 
-  async close() {
+  async close(status: "success" | "failed" = "success") {
     if (this.#browserSigner) {
-      await this.#browserSigner.close();
+      await this.#browserSigner.close(status);
     }
   }
 }

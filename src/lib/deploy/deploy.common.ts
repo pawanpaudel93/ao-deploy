@@ -1,4 +1,7 @@
-import { connect, createDataItemSigner } from "@permaweb/aoconnect";
+import {
+  createDataItemSigner as aoCreateDataItemSigner,
+  connect
+} from "@permaweb/aoconnect";
 import pLimit from "p-limit";
 import type {
   AosConfig,
@@ -6,6 +9,7 @@ import type {
   DeployResult,
   Services
 } from "../../types";
+import { createDataItemSigner as browserCreateDataItemSigner } from "../browser-signer";
 import { AOS_QUERY, APP_NAME, defaultServices } from "../constants";
 import { Logger } from "../logger";
 import { minifyLuaCode } from "../minify";
@@ -162,7 +166,13 @@ export class BaseDeploymentsManager {
 
     const owner = await walletInstance.getAddress();
 
-    const signer = createDataItemSigner(walletInstance.signer);
+    // Handle both JWK and browser wallet signers
+    const walletSigner = walletInstance.signer;
+    const signer =
+      walletSigner?.constructor?.name === "BrowserWalletSigner"
+        ? browserCreateDataItemSigner(walletSigner)
+        : aoCreateDataItemSigner(walletSigner);
+
     services = this.validateServices(services);
 
     // Initialize the AO instance with validated URLs

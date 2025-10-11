@@ -17,7 +17,7 @@ export class DeploymentsManager extends BaseDeploymentsManager {
     const name = deployConfig.name || "default";
     const configName = deployConfig.configName || name;
 
-    const jwkOrPath = deployConfig.wallet as JWKInterface | string;
+    const jwkOrPath = deployConfig.wallet as JWKInterface | string | "browser";
     const walletInstance = await Wallet.load(jwkOrPath);
 
     const getContractSource = async () => {
@@ -33,11 +33,16 @@ export class DeploymentsManager extends BaseDeploymentsManager {
       return contractSrc;
     };
 
-    return this._deployContract({
-      ...deployConfig,
-      wallet: walletInstance,
-      getContractSource
-    });
+    try {
+      return await this._deployContract({
+        ...deployConfig,
+        wallet: walletInstance,
+        getContractSource
+      });
+    } finally {
+      // Clean up browser signer if used
+      await walletInstance.close();
+    }
   }
 }
 

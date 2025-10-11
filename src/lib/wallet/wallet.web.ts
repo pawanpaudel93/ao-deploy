@@ -21,7 +21,7 @@ export class Wallet implements WalletInterface {
     return window.arweaveWallet.getActiveAddress();
   }
 
-  get signer(): Window["arweaveWallet"] {
+  get signer(): any {
     return window.arweaveWallet;
   }
 }

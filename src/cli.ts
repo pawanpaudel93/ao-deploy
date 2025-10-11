@@ -87,6 +87,10 @@ program
   .option("-n, --name [name]", "Specify the process name.", "default")
   .option("-w, --wallet [wallet]", "Path to the wallet JWK file.")
   .option(
+    "--use-browser-wallet",
+    "Use browser wallet (Wander/ArConnect) for signing transactions."
+  )
+  .option(
     "-l, --lua-path [luaPath]",
     "Specify the Lua modules path seperated by semicolon."
   )
@@ -190,9 +194,11 @@ async function deploymentHandler() {
           }, [])
         : [];
 
+      const wallet = options.useBrowserWallet ? "browser" : options.wallet;
+
       const result = await deployContract({
         name: options.name,
-        wallet: options.wallet,
+        wallet: wallet,
         contractPath: contractOrConfigPath,
         scheduler: options.scheduler,
         module: options.module,

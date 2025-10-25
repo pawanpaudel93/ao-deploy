@@ -24,8 +24,8 @@ importers:
         specifier: ^1.21.6
         version: 1.21.7
       node-arweave-wallet:
-        specifier: ^0.0.6
-        version: 0.0.6
+        specifier: ^0.0.8
+        version: 0.0.8
       p-limit:
         specifier: ^4.0.0
         version: 4.0.0
@@ -5446,8 +5446,8 @@ packages:
     resolution: {integrity: sha512-+eawOlIgy680F0kBzPUNFhMZGtJ1YmqM6l4+Crf4IkImjYrO/mqPwRMh352g23uIaQKFItcQ64I7KMaJxHgAVA==}
     dev: true
 
-  /node-arweave-wallet@0.0.6:
-    resolution: {integrity: sha512-P2NIaCWcofdbUXb5GNp6O1uuhg9ljdL+Z6Wy77mrmYzrVq44Mh8pE8gQ46BBg/NtUfvQ0DlBzrbc75SpSu90zw==}
+  /node-arweave-wallet@0.0.8:
+    resolution: {integrity: sha512-27GjG7bWaULNynvRK2fbsQU+j+VxNpHh6sP07HEsm28cp3BTBD4sd0fqdUKQe69lz4FyDwyOnPLfK8O8lo9cCw==}
     dependencies:
       '@dha-team/arbundles': 1.0.4
       arweave: 1.15.7

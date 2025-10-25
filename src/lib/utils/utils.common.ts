@@ -7,6 +7,8 @@ import { Logger } from "../logger";
 const ArweaveClass = Arweave?.default || Arweave;
 
 const AUTH_REQUEST_ERROR_MESSAGE = "User cancelled the AuthRequest";
+const AUTH_PERMISSION_ERROR_MESSAGE =
+  'Missing permission(s) for "signDataItem": SIGN_TRANSACTION';
 
 /**
  * Initializes a default Arweave instance.
@@ -84,7 +86,8 @@ export async function retryWithDelay<T>(
       attempts += 1;
       if (
         attempts < maxAttempts &&
-        !errorMessage.includes(AUTH_REQUEST_ERROR_MESSAGE)
+        !errorMessage.includes(AUTH_REQUEST_ERROR_MESSAGE) &&
+        !errorMessage.includes(AUTH_PERMISSION_ERROR_MESSAGE)
       ) {
         const currentDelay = getDelay(attempts);
         // console.log(`Attempt ${attempts} failed, retrying...`)

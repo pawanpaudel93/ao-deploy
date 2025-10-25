@@ -24,8 +24,8 @@ importers:
         specifier: ^1.21.6
         version: 1.21.7
       node-arweave-wallet:
-        specifier: ^0.0.4
-        version: 0.0.4
+        specifier: ^0.0.6
+        version: 0.0.6
       p-limit:
         specifier: ^4.0.0
         version: 4.0.0
@@ -4424,6 +4424,10 @@ packages:
     engines: {node: '>=16'}
     dev: true
 
+  /get-them-args@1.3.2:
+    resolution: {integrity: sha512-LRn8Jlk+DwZE4GTlDbT3Hikd1wSHgLMme/+7ddlqKd7ldwR6LjJgTVWzBnR01wnYGe4KgrXjg287RaI22UHmAw==}
+    dev: false
+
   /get-tsconfig@4.10.0:
     resolution: {integrity: sha512-kGzZ3LWWQcGIAmg6iWvXn0ei6WDtV26wzHRMwDSzmAbcXrTEXxHy6IehI6/4eT6VRKyMP1eF1VqwrVUmE/LR7A==}
     dependencies:
@@ -4960,6 +4964,14 @@ packages:
       json-buffer: 3.0.1
     dev: true
 
+  /kill-port@2.0.1:
+    resolution: {integrity: sha512-e0SVOV5jFo0mx8r7bS29maVWp17qGqLBZ5ricNSajON6//kmb7qqqNnml4twNE8Dtj97UQD+gNFOaipS/q1zzQ==}
+    hasBin: true
+    dependencies:
+      get-them-args: 1.3.2
+      shell-exec: 1.0.2
+    dev: false
+
   /kleur@3.0.3:
     resolution: {integrity: sha512-eTIzlVOSUR+JxdDFepEYcBMtZ9Qqdef+rnzWdRZuMbOywu5tO2w2N7rqjoANZ5k9vywhL6Br1VRjUIgTQx4E8w==}
     engines: {node: '>=6'}
@@ -5434,11 +5446,12 @@ packages:
     resolution: {integrity: sha512-+eawOlIgy680F0kBzPUNFhMZGtJ1YmqM6l4+Crf4IkImjYrO/mqPwRMh352g23uIaQKFItcQ64I7KMaJxHgAVA==}
     dev: true
 
-  /node-arweave-wallet@0.0.4:
-    resolution: {integrity: sha512-sPM/y26rqGLiKes7X5A6kMGOXLvAVYqm038K1EY9aTBxn6tG2mBhju9dEP5c+X4JSdXs74MKXs2OAhQnSdBnOQ==}
+  /node-arweave-wallet@0.0.6:
+    resolution: {integrity: sha512-P2NIaCWcofdbUXb5GNp6O1uuhg9ljdL+Z6Wy77mrmYzrVq44Mh8pE8gQ46BBg/NtUfvQ0DlBzrbc75SpSu90zw==}
     dependencies:
       '@dha-team/arbundles': 1.0.4
       arweave: 1.15.7
+      kill-port: 2.0.1
       nanoid: 5.1.6
     transitivePeerDependencies:
       - bufferutil
@@ -6635,6 +6648,10 @@ packages:
     resolution: {integrity: sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A==}
     engines: {node: '>=8'}
     dev: true
+
+  /shell-exec@1.0.2:
+    resolution: {integrity: sha512-jyVd+kU2X+mWKMmGhx4fpWbPsjvD53k9ivqetutVW/BQ+WIZoDoP4d8vUMGezV6saZsiNoW2f9GIhg9Dondohg==}
+    dev: false
 
   /shimmer@1.2.1:
     resolution: {integrity: sha512-sQTKC1Re/rM6XyFM6fIAGHRPVGvyXfgzIDvzoq608vM+jeyVD0Tu1E6Np0Kc2zAIFWIj963V2800iF/9LPieQw==}

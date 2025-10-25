@@ -52,9 +52,18 @@ export class Wallet implements WalletInterface {
 
   static async load(jwkOrPath?: fs.PathLike | JWKInterface | "browser") {
     if (jwkOrPath === "browser") {
-      const arweaveWallet = new NodeArweaveWallet();
-      await arweaveWallet.initialize();
-      return new Wallet(undefined, arweaveWallet);
+      let arweaveWallet: NodeArweaveWallet | null = null;
+      try {
+        arweaveWallet = new NodeArweaveWallet({ freePort: true });
+        await arweaveWallet.initialize();
+        await arweaveWallet.connect(["ACCESS_ADDRESS", "SIGN_TRANSACTION"], {
+          name: "AO Deploy"
+        });
+        return new Wallet(undefined, arweaveWallet);
+      } catch (error) {
+        await arweaveWallet?.close("failed");
+        throw error;
+      }
     }
 
     const jwk = await this.getWallet(jwkOrPath);

@@ -1,4 +1,6 @@
+import { createDataItemSigner } from "@permaweb/aoconnect";
 import type { JWKInterface } from "arweave/node/lib/wallet";
+import { NodeArweaveWallet } from "node-arweave-wallet";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -6,14 +8,20 @@ import { arweave, isJwk } from "../utils/utils.common";
 import { WalletInterface } from "./wallet.types";
 
 export class Wallet implements WalletInterface {
-  #jwk: JWKInterface;
+  #jwk: JWKInterface | null = null;
+  #arweaveWallet: NodeArweaveWallet | null = null;
 
-  constructor(jwk: JWKInterface) {
-    this.#jwk = jwk;
+  constructor(jwk?: JWKInterface, arweaveWallet?: NodeArweaveWallet) {
+    if (jwk) {
+      this.#jwk = jwk;
+    }
+    if (arweaveWallet) {
+      this.#arweaveWallet = arweaveWallet;
+    }
   }
 
   #checkIfWalletLoaded() {
-    if (!this.#jwk) {
+    if (!this.#jwk && !this.#arweaveWallet) {
       throw new Error("Wallet not loaded yet");
     }
   }
@@ -42,18 +50,40 @@ export class Wallet implements WalletInterface {
     }
   }
 
-  static async load(jwkOrPath?: fs.PathLike | JWKInterface) {
+  static async load(jwkOrPath?: fs.PathLike | JWKInterface | "browser") {
+    if (jwkOrPath === "browser") {
+      const arweaveWallet = new NodeArweaveWallet();
+      await arweaveWallet.initialize();
+      return new Wallet(undefined, arweaveWallet);
+    }
+
     const jwk = await this.getWallet(jwkOrPath);
     return new Wallet(jwk);
   }
 
   async getAddress() {
     this.#checkIfWalletLoaded();
-    return await arweave.wallets.getAddress(this.#jwk);
+
+    if (this.#arweaveWallet) {
+      return await this.#arweaveWallet.getActiveAddress();
+    }
+
+    return await arweave.wallets.getAddress(this.#jwk!);
   }
 
-  get signer() {
+  getDataItemSigner() {
     this.#checkIfWalletLoaded();
-    return this.#jwk;
+
+    if (this.#arweaveWallet) {
+      return this.#arweaveWallet.getDataItemSigner();
+    }
+
+    return createDataItemSigner(this.#jwk!);
+  }
+
+  async close(status: "success" | "failed" = "success") {
+    if (this.#arweaveWallet) {
+      await this.#arweaveWallet.close(status);
+    }
   }
 }

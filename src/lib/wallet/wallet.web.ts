@@ -1,3 +1,4 @@
+import { createDataItemSigner } from "@permaweb/aoconnect";
 import { isBrowserEnv } from "../utils/utils.common";
 import { WalletInterface } from "./wallet.types";
 
@@ -21,7 +22,12 @@ export class Wallet implements WalletInterface {
     return window.arweaveWallet.getActiveAddress();
   }
 
-  get signer(): Window["arweaveWallet"] {
-    return window.arweaveWallet;
+  getDataItemSigner() {
+    return createDataItemSigner(window.arweaveWallet);
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async close(status: "success" | "failed" = "success") {
+    return Promise.resolve();
   }
 }

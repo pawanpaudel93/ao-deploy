@@ -1,4 +1,4 @@
-import { connect, createDataItemSigner } from "@permaweb/aoconnect";
+import { connect } from "@permaweb/aoconnect";
 import pLimit from "p-limit";
 import type {
   AosConfig,
@@ -162,7 +162,8 @@ export class BaseDeploymentsManager {
 
     const owner = await walletInstance.getAddress();
 
-    const signer = createDataItemSigner(walletInstance.signer);
+    const signer = walletInstance.getDataItemSigner();
+
     services = this.validateServices(services);
 
     // Initialize the AO instance with validated URLs
@@ -283,6 +284,9 @@ export class BaseDeploymentsManager {
         retry.count,
         retry.delay
       );
+
+      // Close wallet after message is sent
+      await walletInstance.close("success");
 
       const { Output, Error: error } = await retryWithDelay(
         async () =>

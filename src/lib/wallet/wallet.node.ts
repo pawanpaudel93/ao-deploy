@@ -71,16 +71,6 @@ export class Wallet implements WalletInterface {
     return await arweave.wallets.getAddress(this.#jwk!);
   }
 
-  get signer(): any {
-    this.#checkIfWalletLoaded();
-
-    if (this.#arweaveWallet) {
-      return this.#arweaveWallet;
-    }
-
-    return this.#jwk!;
-  }
-
   getDataItemSigner() {
     this.#checkIfWalletLoaded();
 

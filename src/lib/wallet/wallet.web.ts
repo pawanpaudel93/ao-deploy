@@ -22,12 +22,8 @@ export class Wallet implements WalletInterface {
     return window.arweaveWallet.getActiveAddress();
   }
 
-  get signer(): any {
-    return window.arweaveWallet;
-  }
-
   getDataItemSigner() {
-    return createDataItemSigner(this.signer);
+    return createDataItemSigner(window.arweaveWallet);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

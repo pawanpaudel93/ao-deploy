@@ -9,7 +9,6 @@ import type {
   DeployResult,
   Services
 } from "../../types";
-import { createDataItemSigner as browserCreateDataItemSigner } from "../browser-signer";
 import { AOS_QUERY, APP_NAME, defaultServices } from "../constants";
 import { Logger } from "../logger";
 import { minifyLuaCode } from "../minify";
@@ -168,10 +167,11 @@ export class BaseDeploymentsManager {
 
     // Handle both JWK and browser wallet signers
     const walletSigner = walletInstance.signer;
-    const signer =
-      walletSigner?.constructor?.name === "BrowserWalletSigner"
-        ? browserCreateDataItemSigner(walletSigner)
-        : aoCreateDataItemSigner(walletSigner);
+    const isNodeArweaveWallet =
+      walletSigner?.constructor?.name === "NodeArweaveWallet";
+    const signer = isNodeArweaveWallet
+      ? walletSigner.getDataItemSigner()
+      : aoCreateDataItemSigner(walletSigner);
 
     services = this.validateServices(services);
 
@@ -295,10 +295,7 @@ export class BaseDeploymentsManager {
       );
 
       // Close browser wallet signer after message is sent (all signatures obtained)
-      if (
-        (walletInstance as any).signer?.constructor?.name ===
-        "BrowserWalletSigner"
-      ) {
+      if (isNodeArweaveWallet) {
         await (walletInstance as any).close();
       }
 

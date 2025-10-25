@@ -1,26 +1,26 @@
 import type { JWKInterface } from "arweave/node/lib/wallet";
+import { NodeArweaveWallet } from "node-arweave-wallet";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { BrowserWalletSigner } from "../browser-signer";
 import { arweave, isJwk } from "../utils/utils.common";
 import { WalletInterface } from "./wallet.types";
 
 export class Wallet implements WalletInterface {
   #jwk: JWKInterface | null = null;
-  #browserSigner: BrowserWalletSigner | null = null;
+  #arweaveWallet: NodeArweaveWallet | null = null;
 
-  constructor(jwk?: JWKInterface, browserSigner?: BrowserWalletSigner) {
+  constructor(jwk?: JWKInterface, arweaveWallet?: NodeArweaveWallet) {
     if (jwk) {
       this.#jwk = jwk;
     }
-    if (browserSigner) {
-      this.#browserSigner = browserSigner;
+    if (arweaveWallet) {
+      this.#arweaveWallet = arweaveWallet;
     }
   }
 
   #checkIfWalletLoaded() {
-    if (!this.#jwk && !this.#browserSigner) {
+    if (!this.#jwk && !this.#arweaveWallet) {
       throw new Error("Wallet not loaded yet");
     }
   }
@@ -51,9 +51,9 @@ export class Wallet implements WalletInterface {
 
   static async load(jwkOrPath?: fs.PathLike | JWKInterface | "browser") {
     if (jwkOrPath === "browser") {
-      const browserSigner = new BrowserWalletSigner();
-      await browserSigner.initialize();
-      return new Wallet(undefined, browserSigner);
+      const arweaveWallet = new NodeArweaveWallet();
+      await arweaveWallet.initialize();
+      return new Wallet(undefined, arweaveWallet);
     }
 
     const jwk = await this.getWallet(jwkOrPath);
@@ -63,8 +63,8 @@ export class Wallet implements WalletInterface {
   async getAddress() {
     this.#checkIfWalletLoaded();
 
-    if (this.#browserSigner) {
-      return await this.#browserSigner.getAddress();
+    if (this.#arweaveWallet) {
+      return await this.#arweaveWallet.getActiveAddress();
     }
 
     return await arweave.wallets.getAddress(this.#jwk!);
@@ -73,17 +73,16 @@ export class Wallet implements WalletInterface {
   get signer(): any {
     this.#checkIfWalletLoaded();
 
-    if (this.#browserSigner) {
-      // Return the browser signer
-      return this.#browserSigner;
+    if (this.#arweaveWallet) {
+      return this.#arweaveWallet;
     }
 
     return this.#jwk!;
   }
 
   async close(status: "success" | "failed" = "success") {
-    if (this.#browserSigner) {
-      await this.#browserSigner.close(status);
+    if (this.#arweaveWallet) {
+      await this.#arweaveWallet.close(status);
     }
   }
 }

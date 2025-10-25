@@ -62,9 +62,9 @@ export type DeployConfig = {
   cron?: string;
 
   /**
-   * Wallet path, JWK itself, or "browser" to use browser wallet (Wander/ArConnect)
+   * Wallet path, JWK itself, or "browser" to use browser wallet (Wander or other wallet providers)
    */
-  wallet?: JWKInterface | string | "browser";
+  wallet?: JWKInterface | "browser" | (string & {});
 
   /**
    * lua path to find the lua modules

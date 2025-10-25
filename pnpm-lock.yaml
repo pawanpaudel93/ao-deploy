@@ -8,9 +8,6 @@ importers:
 
   .:
     dependencies:
-      '@dha-team/arbundles':
-        specifier: ^1.0.3
-        version: 1.0.3
       '@permaweb/aoconnect':
         specifier: ^0.0.90
         version: 0.0.90

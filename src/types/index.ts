@@ -62,7 +62,7 @@ export type DeployConfig = {
   cron?: string;
 
   /**
-   * Wallet path, JWK itself, or "browser" to use browser wallet (Wander or other wallet providers)
+   * Wallet path, JWK itself, or "browser" to use browser wallet (Wander or other compatible wallet)
    */
   wallet?: JWKInterface | "browser" | (string & {});
 

@@ -88,7 +88,7 @@ program
   .option("-w, --wallet [wallet]", "Path to the wallet JWK file.")
   .option(
     "--use-browser-wallet",
-    "Use browser wallet (Wander or other wallet providers) for signing transactions."
+    "Use browser wallet (Wander or other compatible wallet) for signing transactions."
   )
   .option(
     "-l, --lua-path [luaPath]",

@@ -1,4 +1,3 @@
-import { JWKInterface } from "arweave/node/lib/wallet";
 import type { DeployConfig, DeployResult } from "../../types";
 import { LuaProjectLoader } from "../loader";
 import { Wallet } from "../wallet/wallet.node";
@@ -17,8 +16,7 @@ export class DeploymentsManager extends BaseDeploymentsManager {
     const name = deployConfig.name || "default";
     const configName = deployConfig.configName || name;
 
-    const jwkOrPath = deployConfig.wallet as JWKInterface | string | "browser";
-    const walletInstance = await Wallet.load(jwkOrPath);
+    const walletInstance = await Wallet.load(deployConfig.wallet);
 
     const getContractSource = async () => {
       if (deployConfig.contractSrc) return deployConfig.contractSrc;

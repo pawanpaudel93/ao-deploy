@@ -1,3 +1,4 @@
+import { createDataItemSigner } from "@permaweb/aoconnect";
 import type { JWKInterface } from "arweave/node/lib/wallet";
 import { NodeArweaveWallet } from "node-arweave-wallet";
 import fs from "node:fs";
@@ -78,6 +79,16 @@ export class Wallet implements WalletInterface {
     }
 
     return this.#jwk!;
+  }
+
+  getDataItemSigner() {
+    this.#checkIfWalletLoaded();
+
+    if (this.#arweaveWallet) {
+      return this.#arweaveWallet.getDataItemSigner();
+    }
+
+    return createDataItemSigner(this.#jwk!);
   }
 
   async close(status: "success" | "failed" = "success") {

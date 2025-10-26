@@ -4,6 +4,7 @@ import { NodeArweaveWallet } from "node-arweave-wallet";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { DeployConfig } from "../../types";
 import { arweave, isJwk } from "../utils/utils.common";
 import { WalletInterface } from "./wallet.types";
 
@@ -50,11 +51,18 @@ export class Wallet implements WalletInterface {
     }
   }
 
-  static async load(jwkOrPath?: fs.PathLike | JWKInterface | "browser") {
+  static async load(
+    jwkOrPath?: fs.PathLike | JWKInterface | "browser",
+    browserConfig?: DeployConfig["browserConfig"]
+  ) {
     if (jwkOrPath === "browser") {
       let arweaveWallet: NodeArweaveWallet | null = null;
       try {
-        arweaveWallet = new NodeArweaveWallet({ freePort: true });
+        arweaveWallet = new NodeArweaveWallet({
+          freePort: true,
+          browser: browserConfig?.browser,
+          browserProfile: browserConfig?.browserProfile
+        });
         await arweaveWallet.initialize();
         await arweaveWallet.connect(["ACCESS_ADDRESS", "SIGN_TRANSACTION"], {
           name: "AO Deploy"

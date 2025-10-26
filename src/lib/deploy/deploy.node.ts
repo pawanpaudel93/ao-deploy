@@ -16,7 +16,10 @@ export class DeploymentsManager extends BaseDeploymentsManager {
     const name = deployConfig.name || "default";
     const configName = deployConfig.configName || name;
 
-    const walletInstance = await Wallet.load(deployConfig.wallet);
+    const walletInstance = await Wallet.load(
+      deployConfig.wallet,
+      deployConfig.browserConfig
+    );
 
     const getContractSource = async () => {
       if (deployConfig.contractSrc) return deployConfig.contractSrc;

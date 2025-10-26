@@ -91,6 +91,15 @@ program
     "Use browser wallet (Wander or other compatible wallet) for signing transactions."
   )
   .option(
+    "--browser [browser]",
+    "Browser to use for signing transactions.",
+    "chrome"
+  )
+  .option(
+    "--browser-profile [browserProfile]",
+    "Browser profile to use for signing transactions."
+  )
+  .option(
     "-l, --lua-path [luaPath]",
     "Specify the Lua modules path seperated by semicolon."
   )
@@ -220,7 +229,11 @@ async function deploymentHandler() {
         minify: options.minify,
         onBoot: options.onBoot,
         blueprints: options.blueprints,
-        forceSpawn: options.forceSpawn
+        forceSpawn: options.forceSpawn,
+        browserConfig: {
+          browser: options.browser,
+          browserProfile: options.browserProfile
+        }
       });
       logDeploymentDetails(result);
     } else {

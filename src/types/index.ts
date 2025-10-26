@@ -148,6 +148,31 @@ export type DeployConfig = {
    * @default false
    */
   forceSpawn?: boolean;
+
+  /**
+   * Browser configuration for browser wallet
+   * @example
+   * ```ts
+   * browserConfig: {
+   *   browser: "chrome",
+   *   browserProfile: "Profile 1"
+   * }
+   * ```
+   */
+  browserConfig?: {
+    browser?:
+      | "chrome"
+      | "firefox"
+      | "edge"
+      | "brave"
+      | "safari"
+      | "opera"
+      | "zen"
+      | "vivaldi"
+      | (string & {})
+      | false;
+    browserProfile?: string;
+  };
 } & (
   | {
       /**
@@ -185,7 +210,7 @@ export type DeployConfig = {
 
 export type WebDeployConfig = Omit<
   DeployConfig,
-  "wallet" | "contractPath" | "luaPath"
+  "wallet" | "contractPath" | "luaPath" | "browserConfig"
 >;
 
 export type Config = Record<ConfigName, DeployConfig>;

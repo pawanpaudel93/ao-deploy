@@ -11,35 +11,26 @@ A package for deploying AO contracts with support for both Node.js and web envir
 
 - [Features](#features)
 - [Installation](#installation)
-  - [Basic Installation](#basic-installation)
-    - [Using npm](#using-npm)
-    - [Using pnpm](#using-pnpm)
-    - [Using yarn](#using-yarn)
-    - [Using bun](#using-bun)
-  - [Using without installation](#using-without-installation)
+  - [Package Managers](#basic-installation)
+  - [Quick Start (npx/bunx)](#using-without-installation)
   - [Optional Dependencies](#optional-dependencies)
 - [Usage](#usage)
-  - [CLI](#cli)
-    - [Example: Deploy contract](#example-deploy-contract)
-    - [Example: Deploy contract with minify](#example-deploy-contract-with-minify)
-    - [Example: Deploy contract with on-boot](#example-deploy-contract-with-on-boot)
-    - [Example: Deploy blueprints](#example-deploy-blueprints)
-    - [Example: Deploy with browser wallet (Wander or other compatible wallet)](#example-deploy-with-browser-wallet-wander-or-other-compatible-wallet)
-    - [Example: Deploy contracts with configuration](#example-deploy-contracts-with-configuration)
-    - [Example: Build Contract](#example-build-contract)
-    - [Example: Build Contracts using Configuration](#example-build-contracts-using-configuration)
-  - [API Usage](#api-usage)
-    - [Example: Node.js deployContract](#example-nodejs-deploycontract)
-    - [Example: Node.js deployContract with browser wallet](#example-nodejs-deploycontract-with-browser-wallet)
-    - [Parameters](#parameters)
-    - [Example: Node.js deployContracts](#example-nodejs-deploycontracts)
-  - [Web Usage Examples](#web-usage-examples)
-    - [Example: Web deployContract](#example-web-deploycontract)
-    - [Example: Web deployContracts](#example-web-deploycontracts)
+  - [CLI Examples](#cli)
+    - [Basic Deployment](#example-deploy-contract)
+    - [Browser Wallet](#example-deploy-with-browser-wallet-wander-or-other-compatible-wallet)
+    - [Multiple Contracts](#example-deploy-contracts-with-configuration)
+    - [Advanced Options](#example-deploy-contract-with-minify)
+    - [Build Contracts](#example-build-contract)
+  - [API Reference](#api-usage)
+    - [`deployContract`](#deploycontract)
+      - [Node.js Examples](#basic-deployment-nodejs)
+      - [Web Example](#web-deployment)
+      - [Parameters](#parameters-reference)
+    - [`deployContracts`](#deploycontracts)
+      - [Node.js Example](#multiple-contracts-nodejs)
+      - [Web Example](#multiple-contracts-web)
 - [Related](#related)
-- [Author](#author)
-- [🤝 Contributing](#-contributing)
-- [Show your support](#show-your-support)
+- [Contributing](#-contributing)
 
 ## Features
 
@@ -379,9 +370,11 @@ node -e "const path = require('path'); const os = require('os'); console.log(pat
 
 ### API Usage
 
-To deploy a contract, you need to import and call the `deployContract` function from your script. Here are examples for both Node.js and web environments:
+#### deployContract
 
-#### Example: Node.js deployContract
+Deploy a single contract using the `deployContract` function.
+
+##### Basic Deployment (Node.js)
 
 ```ts
 import { deployContract } from "ao-deploy";
@@ -414,7 +407,7 @@ async function main() {
 main();
 ```
 
-#### Example: Node.js deployContract with browser wallet
+##### Browser Wallet (Node.js)
 
 ```ts
 import { deployContract } from "ao-deploy";
@@ -451,7 +444,55 @@ async function main() {
 main();
 ```
 
-##### Parameters
+##### Web Deployment
+
+> [!Note]
+> For web/browser environments, you need to provide the contract source directly since file system access is not available.
+
+```ts
+import { deployContract } from "ao-deploy/web";
+
+async function main() {
+  try {
+    // Contract source as a string (loaded from your build process, CDN, etc.)
+    // Simple AO process that responds to ping messages with "pong"
+    const contractSrc = `
+Handlers.add("ping", function(msg)
+  return ao.send({
+    Action = "Pong",
+    Target = msg.From,
+    Data = "pong"
+  })
+end)
+    `;
+
+    const { messageId, processId } = await deployContract({
+      name: "web-demo",
+      contractSrc: contractSrc,
+      tags: [{ name: "Environment", value: "Web" }],
+      retry: {
+        count: 5,
+        delay: 2000
+      }
+    });
+    
+    const processUrl = `https://www.ao.link/#/entity/${processId}`;
+    console.log(`Deployed Process: ${processUrl}`);
+    if (messageId) {
+      const messageUrl = `https://www.ao.link/#/message/${messageId}`;
+      console.log(`Deployment Message: ${messageUrl}`);
+    }
+  } catch (error: any) {
+    console.log(
+      `Deployment failed!: ${error?.message ?? "Failed to deploy contract!"}\n`
+    );
+  }
+}
+
+main();
+```
+
+##### Parameters Reference
 
 The `deployContract` function accepts the following parameters within the DeployArgs object:
 
@@ -484,9 +525,11 @@ The `deployContract` function accepts the following parameters within the Deploy
 > [!Note]
 > In web environments, you must provide `contractSrc` directly as a string. The `contractPath`, `wallet`, and `luaPath` parameters are not supported in web environments.
 
-#### Example: Node.js deployContracts
+#### deployContracts
 
-To deploy contracts, you need to import and call the `deployContracts` function from your script. Here is a basic example:
+Deploy multiple contracts concurrently using the `deployContracts` function.
+
+##### Multiple Contracts (Node.js)
 
 ```ts
 import { deployContracts } from "ao-deploy";
@@ -541,56 +584,10 @@ async function main() {
 main();
 ```
 
-### Web Usage Examples
+##### Multiple Contracts (Web)
 
-For web/browser environments, you need to provide the contract source directly since file system access is not available:
-
-#### Example: Web deployContract
-
-```ts
-import { deployContract } from "ao-deploy/web";
-
-async function main() {
-  try {
-    // Contract source as a string (loaded from your build process, CDN, etc.)
-    // Simple AO process that responds to ping messages with "pong"
-    const contractSrc = `
-Handlers.add("ping", function(msg)
-  return ao.send({
-    Action = "Pong",
-    Target = msg.From,
-    Data = "pong"
-  })
-end)
-    `;
-
-    const { messageId, processId } = await deployContract({
-      name: "web-demo",
-      contractSrc: contractSrc,
-      tags: [{ name: "Environment", value: "Web" }],
-      retry: {
-        count: 5,
-        delay: 2000
-      }
-    });
-    
-    const processUrl = `https://www.ao.link/#/entity/${processId}`;
-    console.log(`Deployed Process: ${processUrl}`);
-    if (messageId) {
-      const messageUrl = `https://www.ao.link/#/message/${messageId}`;
-      console.log(`Deployment Message: ${messageUrl}`);
-    }
-  } catch (error: any) {
-    console.log(
-      `Deployment failed!: ${error?.message ?? "Failed to deploy contract!"}\n`
-    );
-  }
-}
-
-main();
-```
-
-#### Example: Web deployContracts
+> [!Note]
+> For web/browser environments, you need to provide the contract source directly since file system access is not available.
 
 ```ts
 import { deployContracts } from "ao-deploy/web";
@@ -668,9 +665,6 @@ end)
 
 main();
 ```
-
-> [!Note]
-> In web environments, you must provide the `contractSrc` parameter directly as a string. The `contractPath` parameter is not supported in web environments.
 
 ## Related
 

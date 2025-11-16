@@ -7,8 +7,15 @@ import { Logger } from "../logger";
 const ArweaveClass = Arweave?.default || Arweave;
 
 const AUTH_REQUEST_ERROR_MESSAGE = "User cancelled the AuthRequest";
+const OPERATION_CANCELLED_ERROR_MESSAGE = "User cancelled the operation";
 const AUTH_PERMISSION_ERROR_MESSAGE =
   'Missing permission(s) for "signDataItem": SIGN_TRANSACTION';
+
+const NON_RETRYABLE_ERROR_MESSAGES = [
+  AUTH_REQUEST_ERROR_MESSAGE,
+  AUTH_PERMISSION_ERROR_MESSAGE,
+  OPERATION_CANCELLED_ERROR_MESSAGE
+] as const;
 
 /**
  * Initializes a default Arweave instance.
@@ -84,11 +91,10 @@ export async function retryWithDelay<T>(
     } catch (error: any) {
       const errorMessage = error?.message || String(error);
       attempts += 1;
-      if (
-        attempts < maxAttempts &&
-        !errorMessage.includes(AUTH_REQUEST_ERROR_MESSAGE) &&
-        !errorMessage.includes(AUTH_PERMISSION_ERROR_MESSAGE)
-      ) {
+      const isNonRetryable = NON_RETRYABLE_ERROR_MESSAGES.some((msg) =>
+        errorMessage.includes(msg)
+      );
+      if (attempts < maxAttempts && !isNonRetryable) {
         const currentDelay = getDelay(attempts);
         // console.log(`Attempt ${attempts} failed, retrying...`)
         return new Promise<T>((resolve) =>

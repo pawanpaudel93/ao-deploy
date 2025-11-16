@@ -96,8 +96,8 @@ Options:
   --mu-url [url]                Custom Messenger Unit (MU) URL to connect to. (default: "https://mu.ao-testnet.xyz")
   --concurrency [limit]         Concurrency limit for deploying multiple processes. (default: 5)
   --sqlite                      Use sqlite aos module when spawning new process.
-  --retry-count [count]         Number of retries for deploying contract. (default: 10)
-  --retry-delay [delay]         Delay between retries in milliseconds. (default: 3000)
+  --retry-count [count]         Number of retries for deploying contract. (default: 3)
+  --retry-delay [delay]         Delay between retries in milliseconds. (default: 1000)
   --minify                      Reduce the size of the contract before deployment. (default: false)
   --on-boot                     Load contract when process is spawned. (default: false)
   --blueprints [blueprints...]  Blueprints to use for the contract.
@@ -413,7 +413,7 @@ The `deployContract` function accepts the following parameters within the Deploy
 - `scheduler` (optional): The scheduler to use for the process. Defaults to `_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA`.
 - `tags` (optional): Additional tags to use for spawning the process.
 - `cron` (optional): The cron interval for the process, e.g., "1-minute", "5-minutes". Use format `interval-(second, seconds, minute, minutes, hour, hours, day, days, month, months, year, years, block, blocks, Second, Seconds, Minute, Minutes, Hour, Hours, Day, Days, Month, Months, Year, Years, Block, Blocks)`
-- `retry` (optional): Retry options with `count` and `delay` properties. By default, it will retry up to `10` times with a `3000` milliseconds delay between attempts.
+- `retry` (optional): Retry options with `count` and `delay` properties. By default, it will retry up to `3` times with a `1000` milliseconds delay between attempts.
 - `processId` (optional): The process id of existing process.
 - `minify` (optional): Reduce the size of the contract before deployment.
 - `contractTransformer` (optional): Custom function to transform source code before deployment.

@@ -77,12 +77,12 @@ export type DeployConfig = {
   retry?: {
     /**
      * Retry count
-     * @default 10
+     * @default 3
      */
     count?: number;
     /**
      * Retry delay in milliseconds
-     * @default 3000
+     * @default 1000
      */
     delay?: number;
   };

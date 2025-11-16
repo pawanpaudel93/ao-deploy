@@ -24,8 +24,8 @@ importers:
         specifier: ^1.21.6
         version: 1.21.7
       node-arweave-wallet:
-        specifier: ^0.0.9
-        version: 0.0.9
+        specifier: ^0.0.12
+        version: 0.0.12
       p-limit:
         specifier: ^4.0.0
         version: 4.0.0
@@ -3587,17 +3587,17 @@ packages:
     engines: {node: '>=0.10.0'}
     dev: true
 
-  /default-browser-id@5.0.0:
-    resolution: {integrity: sha512-A6p/pu/6fyBcA1TRz/GqWYPViplrftcW2gZC9q79ngNCKAeR/X3gcEdXQHl4KNXV+3wgIJ1CPkJQ3IHM6lcsyA==}
+  /default-browser-id@5.0.1:
+    resolution: {integrity: sha512-x1VCxdX4t+8wVfd1so/9w+vQ4vx7lKd2Qp5tDRutErwmR85OgmfX7RlLRMWafRMY7hbEiXIbudNrjOAPa/hL8Q==}
     engines: {node: '>=18'}
     dev: false
 
-  /default-browser@5.2.1:
-    resolution: {integrity: sha512-WY/3TUME0x3KPYdRRxEJJvXRHV4PyPoUsxtZa78lwItwRQRHhd2U9xOscaT/YTf8uCXIAjeJOFBVEh/7FtD8Xg==}
+  /default-browser@5.4.0:
+    resolution: {integrity: sha512-XDuvSq38Hr1MdN47EDvYtx3U0MTqpCEn+F6ft8z2vYDzMrvQhVp0ui9oQdqW3MvK3vqUETglt1tVGgjLuJ5izg==}
     engines: {node: '>=18'}
     dependencies:
       bundle-name: 4.1.0
-      default-browser-id: 5.0.0
+      default-browser-id: 5.0.1
     dev: false
 
   /define-lazy-prop@3.0.0:
@@ -5492,8 +5492,8 @@ packages:
     resolution: {integrity: sha512-+eawOlIgy680F0kBzPUNFhMZGtJ1YmqM6l4+Crf4IkImjYrO/mqPwRMh352g23uIaQKFItcQ64I7KMaJxHgAVA==}
     dev: true
 
-  /node-arweave-wallet@0.0.9:
-    resolution: {integrity: sha512-y4QEwUyXxsBSIIpmhQSzxniDNtQUvYF4nBQQzCImQUwssKccVOHOBHCTi7qwTNyr74FNBBynfxUd6lStr39DJA==}
+  /node-arweave-wallet@0.0.12:
+    resolution: {integrity: sha512-r99JrwvzLv9p3zrYmR9ngr+2H3sfSwLWBpbypc5Pz4msLWsvs+O7++hZibKU9ARf1aQRJQZ42omhN6nQmYJK8g==}
     dependencies:
       '@dha-team/arbundles': 1.0.4
       arweave: 1.15.7
@@ -5637,7 +5637,7 @@ packages:
     resolution: {integrity: sha512-YgBpdJHPyQ2UE5x+hlSXcnejzAvD0b22U2OuAP+8OnlJT+PjWPxtgmGqKKc+RgTM63U9gN0YzrYc71R2WT/hTA==}
     engines: {node: '>=18'}
     dependencies:
-      default-browser: 5.2.1
+      default-browser: 5.4.0
       define-lazy-prop: 3.0.0
       is-inside-container: 1.0.0
       wsl-utils: 0.1.0

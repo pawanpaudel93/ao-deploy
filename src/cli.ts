@@ -163,13 +163,13 @@ program
     "--retry-count [count]",
     "Number of retries for deploying contract.",
     parseToInt,
-    10
+    3
   )
   .option(
     "--retry-delay [delay]",
     "Delay between retries in milliseconds.",
     parseToInt,
-    3000
+    1000
   )
   .option("--minify", "Reduce the size of the contract before deployment.")
   .option("--on-boot", "Load contract when process is spawned.")
@@ -214,8 +214,8 @@ async function deploymentHandler() {
         cron: options.cron,
         tags,
         retry: {
-          count: parseToInt(options.retryCount, 10),
-          delay: parseToInt(options.retryDelay, 3000)
+          count: parseToInt(options.retryCount, 3),
+          delay: parseToInt(options.retryDelay, 1000)
         },
         luaPath: options.luaPath,
         configName: options.name,

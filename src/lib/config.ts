@@ -175,6 +175,39 @@ export class ConfigManager {
     }
   }
 
+  static #validateBrowserConfig(
+    browserConfig: DeployConfig["browserConfig"],
+    keyName: string
+  ): boolean {
+    if (!browserConfig) return true;
+
+    if (typeof browserConfig !== "object") {
+      throw new Error(
+        `Invalid "browserConfig" value in configuration for "${keyName}": ${jsonStringify(browserConfig)}`
+      );
+    }
+
+    const { browser, browserProfile } = browserConfig;
+
+    if (
+      browser !== undefined &&
+      typeof browser !== "string" &&
+      browser !== false
+    ) {
+      throw new Error(
+        `Invalid "browser" value in configuration for "${keyName}": ${jsonStringify(browser)}`
+      );
+    }
+
+    if (browserProfile !== undefined && typeof browserProfile !== "string") {
+      throw new Error(
+        `Invalid "browserProfile" value in configuration for "${keyName}": ${jsonStringify(browserProfile)}`
+      );
+    }
+
+    return true;
+  }
+
   static isValidConfig(config: Config): boolean {
     // Check if config exists, is an object, and is not empty
     if (
@@ -222,6 +255,7 @@ export class ConfigManager {
       this.#validateTags(deployConfig.tags, name);
       this.#validateRetry(deployConfig.retry, name);
       this.#validateServices(deployConfig.services, name);
+      this.#validateBrowserConfig(deployConfig.browserConfig, name);
 
       if (deployConfig.cron && !isCronPattern(deployConfig.cron)) {
         throw new Error(

@@ -62,9 +62,9 @@ export type DeployConfig = {
   cron?: string;
 
   /**
-   * Wallet path or JWK itself
+   * Wallet path, JWK itself, or "browser" to use browser wallet (Wander or other compatible wallet)
    */
-  wallet?: JWKInterface | string;
+  wallet?: JWKInterface | "browser" | (string & {});
 
   /**
    * lua path to find the lua modules
@@ -77,12 +77,12 @@ export type DeployConfig = {
   retry?: {
     /**
      * Retry count
-     * @default 10
+     * @default 3
      */
     count?: number;
     /**
      * Retry delay in milliseconds
-     * @default 3000
+     * @default 1000
      */
     delay?: number;
   };
@@ -148,6 +148,31 @@ export type DeployConfig = {
    * @default false
    */
   forceSpawn?: boolean;
+
+  /**
+   * Browser configuration for browser wallet
+   * @example
+   * ```ts
+   * browserConfig: {
+   *   browser: "chrome",
+   *   browserProfile: "Profile 1"
+   * }
+   * ```
+   */
+  browserConfig?: {
+    browser?:
+      | "chrome"
+      | "firefox"
+      | "edge"
+      | "brave"
+      | "safari"
+      | "opera"
+      | "zen"
+      | "vivaldi"
+      | (string & {})
+      | false;
+    browserProfile?: string;
+  };
 } & (
   | {
       /**
@@ -185,7 +210,7 @@ export type DeployConfig = {
 
 export type WebDeployConfig = Omit<
   DeployConfig,
-  "wallet" | "contractPath" | "luaPath"
+  "wallet" | "contractPath" | "luaPath" | "browserConfig"
 >;
 
 export type Config = Record<ConfigName, DeployConfig>;

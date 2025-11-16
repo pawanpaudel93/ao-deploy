@@ -17,7 +17,7 @@ export class DeploymentsManager extends BaseDeploymentsManager {
 
     const getContractSource = async () => deployConfig.contractSrc || "";
 
-    return this._deployContract({
+    return this.deploy({
       ...deployConfig,
       wallet: walletInstance,
       getContractSource

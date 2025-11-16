@@ -1,4 +1,4 @@
-import { connect, createDataItemSigner } from "@permaweb/aoconnect";
+import { connect } from "@permaweb/aoconnect";
 import pLimit from "p-limit";
 import type {
   AosConfig,
@@ -120,7 +120,7 @@ export class BaseDeploymentsManager {
     }
   }
 
-  protected async _deployContract({
+  protected async deploy({
     name,
     wallet: walletInstance,
     contractPath,
@@ -139,16 +139,18 @@ export class BaseDeploymentsManager {
     onBoot,
     blueprints,
     silent = false,
-    forceSpawn = false
+    forceSpawn = false,
+    isSharedWallet = false
   }: Omit<DeployConfig, "wallet"> & {
     getContractSource: () => Promise<string>;
     wallet: WalletInterface;
+    isSharedWallet?: boolean;
   }): Promise<DeployResult> {
     name = name || "default";
     configName = configName || name;
     retry = {
-      count: parseToInt(retry?.count, 10),
-      delay: parseToInt(retry?.delay, 3000)
+      count: parseToInt(retry?.count, 3),
+      delay: parseToInt(retry?.delay, 1000)
     };
 
     const logger = new Logger(configName, silent);
@@ -162,7 +164,8 @@ export class BaseDeploymentsManager {
 
     const owner = await walletInstance.getAddress();
 
-    const signer = createDataItemSigner(walletInstance.signer);
+    const signer = walletInstance.getDataItemSigner();
+
     services = this.validateServices(services);
 
     // Initialize the AO instance with validated URLs
@@ -283,6 +286,11 @@ export class BaseDeploymentsManager {
         retry.count,
         retry.delay
       );
+
+      // Close wallet after message is sent (only if not a shared wallet)
+      if (!isSharedWallet) {
+        await walletInstance.close("success");
+      }
 
       const { Output, Error: error } = await retryWithDelay(
         async () =>

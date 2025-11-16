@@ -87,6 +87,19 @@ program
   .option("-n, --name [name]", "Specify the process name.", "default")
   .option("-w, --wallet [wallet]", "Path to the wallet JWK file.")
   .option(
+    "--use-browser-wallet",
+    "Use browser wallet (Wander or other compatible wallet) for signing transactions."
+  )
+  .option(
+    "--browser [browser]",
+    "Browser to use for signing transactions.",
+    "chrome"
+  )
+  .option(
+    "--browser-profile [browserProfile]",
+    "Browser profile to use for signing transactions."
+  )
+  .option(
     "-l, --lua-path [luaPath]",
     "Specify the Lua modules path seperated by semicolon."
   )
@@ -150,13 +163,13 @@ program
     "--retry-count [count]",
     "Number of retries for deploying contract.",
     parseToInt,
-    10
+    3
   )
   .option(
     "--retry-delay [delay]",
     "Delay between retries in milliseconds.",
     parseToInt,
-    3000
+    1000
   )
   .option("--minify", "Reduce the size of the contract before deployment.")
   .option("--on-boot", "Load contract when process is spawned.")
@@ -190,17 +203,19 @@ async function deploymentHandler() {
           }, [])
         : [];
 
+      const wallet = options.useBrowserWallet ? "browser" : options.wallet;
+
       const result = await deployContract({
         name: options.name,
-        wallet: options.wallet,
+        wallet: wallet,
         contractPath: contractOrConfigPath,
         scheduler: options.scheduler,
         module: options.module,
         cron: options.cron,
         tags,
         retry: {
-          count: parseToInt(options.retryCount, 10),
-          delay: parseToInt(options.retryDelay, 3000)
+          count: parseToInt(options.retryCount, 3),
+          delay: parseToInt(options.retryDelay, 1000)
         },
         luaPath: options.luaPath,
         configName: options.name,
@@ -214,7 +229,11 @@ async function deploymentHandler() {
         minify: options.minify,
         onBoot: options.onBoot,
         blueprints: options.blueprints,
-        forceSpawn: options.forceSpawn
+        forceSpawn: options.forceSpawn,
+        browserConfig: {
+          browser: options.browser,
+          browserProfile: options.browserProfile
+        }
       });
       logDeploymentDetails(result);
     } else {

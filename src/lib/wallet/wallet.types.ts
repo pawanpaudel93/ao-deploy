@@ -1,6 +1,7 @@
-import { JWKInterface } from "arweave/node/lib/wallet";
+import { createDataItemSigner } from "@permaweb/aoconnect";
 
 export interface WalletInterface {
-  signer: JWKInterface | Window["arweaveWallet"];
   getAddress: () => Promise<string>;
+  getDataItemSigner: () => ReturnType<typeof createDataItemSigner>;
+  close: (status?: "success" | "failed") => Promise<void>;
 }

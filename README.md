@@ -11,16 +11,24 @@ A package for deploying AO contracts with support for both Node.js and web envir
 
 - [Features](#features)
 - [Installation](#installation)
-  - [Package Managers](#basic-installation)
-  - [Quick Start (npx/bunx)](#using-without-installation)
+  - [Install Locally](#install-locally)
+  - [Use without installation](#use-without-installation)
   - [Optional Dependencies](#optional-dependencies)
 - [Usage](#usage)
   - [CLI Examples](#cli)
-    - [Basic Deployment](#example-deploy-contract)
-    - [Browser Wallet](#example-deploy-with-browser-wallet-wander-or-other-compatible-wallet)
-    - [Multiple Contracts](#example-deploy-contracts-with-configuration)
-    - [Advanced Options](#example-deploy-contract-with-minify)
-    - [Build Contracts](#example-build-contract)
+    - [Basic Deployment](#basic-deployment)
+    - [Browser Wallet](#browser-wallet)
+      - [Advanced Browser Configuration](#advanced-browser-configuration)
+      - [Using a Configuration File](#using-a-configuration-file)
+    - [Configuration File](#configuration-file)
+    - [Advanced Options](#advanced-options)
+      - [Minify Contract](#minify-contract)
+      - [Deploy with On-Boot](#deploy-with-on-boot)
+      - [Deploy Blueprints](#deploy-blueprints)
+    - [Build Contracts](#build-contracts)
+      - [Build to Default Directory](#build-to-default-directory)
+      - [Build to Custom Directory](#build-to-custom-directory)
+      - [Build Using Configuration File](#build-using-configuration-file)
   - [API Reference](#api-usage)
     - [`deployContract`](#deploycontract)
       - [Node.js Examples](#basic-deployment-nodejs)
@@ -47,33 +55,16 @@ A package for deploying AO contracts with support for both Node.js and web envir
 
 ## Installation
 
-### Basic Installation
-
-### Using npm
+### Install Locally
 
 ```sh
 npm install ao-deploy --save-dev
-```
-
-### Using pnpm
-
-```sh
 pnpm add ao-deploy --save-dev
-```
-
-### Using yarn
-
-```sh
 yarn add ao-deploy --dev
-```
-
-### Using bun
-
-```sh
 bun add ao-deploy --dev
 ```
 
-### Using without installation
+### Use without installation
 
 You can use `ao-deploy` without installing it locally by using package runners:
 
@@ -158,13 +149,15 @@ Options:
   -h, --help                    display help for command
 ```
 
-#### Example: Deploy contract
+#### Basic Deployment
 
 ```sh
 ao-deploy process.lua -n tictactoe -w wallet.json --tags name1:value1 name2:value2
 ```
 
-### Example: Deploy contract with minify
+#### Advanced Options
+
+##### Minify Contract
 
 > [!Note]
 > Make sure to install `lua-format` as mentioned in [Optional Dependencies](#optional-dependencies) section.
@@ -173,19 +166,19 @@ ao-deploy process.lua -n tictactoe -w wallet.json --tags name1:value1 name2:valu
 ao-deploy process.lua -n tictactoe -w wallet.json --tags name1:value1 name2:value2 --minify
 ```
 
-#### Example: Deploy contract with on-boot
+##### Deploy with On-Boot
 
 ```sh
 ao-deploy process.lua -n tictactoe -w wallet.json --tags name1:value1 name2:value2 --on-boot
 ```
 
-#### Example: Deploy blueprints
+##### Deploy Blueprints
 
 ```sh
 ao-deploy -n tictactoe -w wallet.json --blueprints arns token
 ```
 
-#### Example: Deploy with browser wallet (Wander or other compatible wallet)
+#### Browser Wallet
 
 > [!Important]
 > When deploying multiple contracts with browser wallets, the first browser configuration found in the deployment configs will be used for all browser deployments. This ensures a single browser session is shared across all deployments.
@@ -196,7 +189,7 @@ Use your browser wallet for secure transaction signing:
 ao-deploy process.lua --use-browser-wallet -n MyProcess
 ```
 
-**Advanced browser configuration:**
+##### Advanced Browser Configuration
 
 ```sh
 # Use specific browser
@@ -206,7 +199,7 @@ ao-deploy process.lua --use-browser-wallet --browser firefox -n MyProcess
 ao-deploy process.lua --use-browser-wallet --browser chrome --browser-profile "Profile 1" -n MyProcess
 ```
 
-**Configuration file usage:**
+##### Using a Configuration File
 
 ```ts
 export default defineConfig({
@@ -228,12 +221,12 @@ Then deploy with:
 ao-deploy ao.config.ts
 ```
 
-#### Example: Deploy contracts with configuration
+#### Configuration File
 
 > [!Note]
 > Configuration files are only supported in Node.js environments. For web environments, use the API directly with individual contract configurations.
 
-Here is an example using a deployment configuration:
+Deploy multiple contracts using a configuration file:
 
 ```ts
 // aod.config.ts
@@ -288,27 +281,25 @@ Deploy specific contracts:
 ao-deploy aod.config.ts --deploy=contract_1,contract_3
 ```
 
-#### Example: Build Contract
+#### Build Contracts
 
 > [!Note]
 > Contract building is only available in Node.js environments. For web environments, you need to bundle your contracts using your own build process.
 
-To Build contracts and produce single bundle lua file, take a look at below provided commands
-
-Build contract and save to default(`process-dist`) directory:
+##### Build to Default Directory
 
 ```sh
 aod src/process.lua -n my-process --build-only
 ```
 
-Build contract and save to specific directory:
+##### Build to Custom Directory
 
 ```sh
 aod src/process.lua -n my-process --build-only --out-dir <PATH>
 aod src/process.lua -n my-process --build-only --out-dir ./dist
 ```
 
-#### Example: Build Contracts using Configuration
+##### Build Using Configuration File
 
 > [!Note]
 > Configuration-based building is only available in Node.js environments.

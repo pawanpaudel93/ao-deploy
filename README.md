@@ -134,6 +134,9 @@ ao-deploy -n tictactoe -w wallet.json --blueprints arns token
 
 #### Example: Deploy with browser wallet (Wander or other compatible wallet)
 
+> [!Important]
+> When deploying multiple contracts with browser wallets, the first browser configuration found in the deployment configs will be used for all browser deployments. This ensures a single browser session is shared across all deployments.
+
 Use your browser wallet for secure transaction signing:
 
 ```sh

@@ -660,6 +660,7 @@ main();
 ## Related
 
 - [create-ao-contract](https://github.com/pawanpaudel93/create-ao-contract): A CLI tool for scaffolding AO contracts.
+- [node-arweave-wallet](https://github.com/pawanpaudel93/node-arweave-wallet): A library for interacting with Arweave browser wallets.
 
 ## Author
 

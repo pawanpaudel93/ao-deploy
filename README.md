@@ -7,6 +7,40 @@
 
 A package for deploying AO contracts with support for both Node.js and web environments.
 
+## Table of Contents
+
+- [Features](#features)
+- [Installation](#installation)
+  - [Basic Installation](#basic-installation)
+    - [Using npm](#using-npm)
+    - [Using pnpm](#using-pnpm)
+    - [Using yarn](#using-yarn)
+    - [Using bun](#using-bun)
+  - [Using without installation](#using-without-installation)
+  - [Optional Dependencies](#optional-dependencies)
+- [Usage](#usage)
+  - [CLI](#cli)
+    - [Example: Deploy contract](#example-deploy-contract)
+    - [Example: Deploy contract with minify](#example-deploy-contract-with-minify)
+    - [Example: Deploy contract with on-boot](#example-deploy-contract-with-on-boot)
+    - [Example: Deploy blueprints](#example-deploy-blueprints)
+    - [Example: Deploy with browser wallet (Wander or other compatible wallet)](#example-deploy-with-browser-wallet-wander-or-other-compatible-wallet)
+    - [Example: Deploy contracts with configuration](#example-deploy-contracts-with-configuration)
+    - [Example: Build Contract](#example-build-contract)
+    - [Example: Build Contracts using Configuration](#example-build-contracts-using-configuration)
+  - [API Usage](#api-usage)
+    - [Example: Node.js deployContract](#example-nodejs-deploycontract)
+    - [Example: Node.js deployContract with browser wallet](#example-nodejs-deploycontract-with-browser-wallet)
+    - [Parameters](#parameters)
+    - [Example: Node.js deployContracts](#example-nodejs-deploycontracts)
+  - [Web Usage Examples](#web-usage-examples)
+    - [Example: Web deployContract](#example-web-deploycontract)
+    - [Example: Web deployContracts](#example-web-deploycontracts)
+- [Related](#related)
+- [Author](#author)
+- [🤝 Contributing](#-contributing)
+- [Show your support](#show-your-support)
+
 ## Features
 
 - 🚀 Build and deploy contracts with ease
@@ -46,6 +80,34 @@ yarn add ao-deploy --dev
 
 ```sh
 bun add ao-deploy --dev
+```
+
+### Using without installation
+
+You can use `ao-deploy` without installing it locally by using package runners:
+
+**Using npx (npm):**
+
+```sh
+npx ao-deploy process.lua -n tictactoe -w wallet.json
+```
+
+**Using bunx (bun):**
+
+```sh
+bunx ao-deploy process.lua -n tictactoe -w wallet.json
+```
+
+**Using pnpm dlx (pnpm):**
+
+```sh
+pnpm dlx ao-deploy process.lua -n tictactoe -w wallet.json
+```
+
+**Using yarn dlx (yarn):**
+
+```sh
+yarn dlx ao-deploy process.lua -n tictactoe -w wallet.json
 ```
 
 ### Optional Dependencies

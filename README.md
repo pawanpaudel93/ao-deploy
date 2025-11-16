@@ -150,21 +150,6 @@ ao-deploy process.lua --use-browser-wallet --browser firefox -n MyProcess
 ao-deploy process.lua --use-browser-wallet --browser chrome --browser-profile "Profile 1" -n MyProcess
 ```
 
-This will:
-
-1. Start a local web server on `localhost`
-2. Automatically open your browser with a signing interface
-3. Connect to Wander or other compatible wallet
-4. Sign transactions securely with your browser wallet
-5. Deploy while keeping your private keys safe in the wallet
-
-**How it works:**
-
-- All deployment logic (bundling, process spawning, message sending) runs in Node.js CLI
-- Only cryptographic signing is delegated to your browser wallet via `window.arweaveWallet.signDataItem()`
-- Your private keys never leave the browser wallet
-- Server only listens on `127.0.0.1` for security
-
 **Configuration file usage:**
 
 ```ts

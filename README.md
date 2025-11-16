@@ -215,8 +215,8 @@ const config = defineConfig({
     contractPath: "contract-2.lua",
     wallet: "browser", // Use browser wallet
     browserConfig: {
-      browser: "firefox", // Use Firefox browser
-      browserProfile: "Default" // Use default profile
+      browser: "brave", // Use Brave browser
+      browserProfile: "Work" // Use profile 1
     },
     // Custom source transformer function
     contractTransformer: (source) => {

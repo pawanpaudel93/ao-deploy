@@ -90,11 +90,7 @@ program
     "--use-browser-wallet",
     "Use browser wallet (Wander or other compatible wallet) for signing transactions."
   )
-  .option(
-    "--browser [browser]",
-    "Browser to use for signing transactions.",
-    "chrome"
-  )
+  .option("--browser [browser]", "Browser to use for signing transactions.")
   .option(
     "--browser-profile [browserProfile]",
     "Browser profile to use for signing transactions."

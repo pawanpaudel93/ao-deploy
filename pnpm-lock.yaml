@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@permaweb/aoconnect':
-        specifier: ^0.0.90
-        version: 0.0.90
+        specifier: ^0.0.93
+        version: 0.0.93
       arweave:
         specifier: ^1.15.7
         version: 1.15.7
@@ -1961,6 +1961,21 @@ packages:
       fastq: 1.19.1
     dev: true
 
+  /@permaweb/ao-core-libs@0.0.8(debug@4.4.1):
+    resolution: {integrity: sha512-td6JVLn/+jlqwPcxmmagYCdle3tEFSa2MDgughGmLRbc7fQ45e5qZkltjHu09Lqr6o5jXWdUEuEnkUbT1zhi6Q==}
+    dependencies:
+      '@dha-team/arbundles': 1.0.4
+      axios: 1.13.2(debug@4.4.1)
+      constants-browserify: 1.0.0
+      http-message-signatures: 1.0.4
+      structured-headers: 2.0.2
+    transitivePeerDependencies:
+      - bufferutil
+      - debug
+      - supports-color
+      - utf-8-validate
+    dev: false
+
   /@permaweb/ao-loader@0.0.44:
     resolution: {integrity: sha512-O/5XuwqxCD9dTIN/jZ6x4rmqIA/Css0bqaXScOrXc0xTz7VjYseM+PNXFf8vAXiOgnNFmrZzDJ0or94cjmqhZA==}
     engines: {node: '>=18'}
@@ -2019,11 +2034,12 @@ packages:
       - utf-8-validate
     dev: true
 
-  /@permaweb/aoconnect@0.0.90:
-    resolution: {integrity: sha512-VKEkwKV5Lv6q2pai38gz/ngcRML4iApWsJc5B8X8ow9fJIXnd9UK8y0HMbrKUF/VB5Eb8r8lJhDr76yiL6QWAA==}
+  /@permaweb/aoconnect@0.0.93:
+    resolution: {integrity: sha512-IWHOIC2qcLMNcg4XbW9kdE246EiyCt1tnVkjJbr7/lzBr7oKiQXxnxY8GihaVnQp+qeKSfZWhUzge7f9yM+01Q==}
     engines: {node: '>=18'}
     dependencies:
       '@dha-team/arbundles': 1.0.3
+      '@permaweb/ao-core-libs': 0.0.8(debug@4.4.1)
       '@permaweb/ao-scheduler-utils': 0.0.25
       '@permaweb/protocol-tag-utils': 0.0.2
       axios: 1.8.3(debug@4.4.1)
@@ -2868,6 +2884,16 @@ packages:
       postcss-value-parser: 4.2.0
     dev: true
 
+  /axios@1.13.2(debug@4.4.1):
+    resolution: {integrity: sha512-VPk9ebNqPcy5lRGuSlKx752IlDatOjT9paPlm8A7yOuW2Fbvp4X3JznJtT4f0GzGLLiWE9W8onz51SqLYwzGaA==}
+    dependencies:
+      follow-redirects: 1.15.9(debug@4.4.1)
+      form-data: 4.0.5
+      proxy-from-env: 1.1.0
+    transitivePeerDependencies:
+      - debug
+    dev: false
+
   /axios@1.8.3:
     resolution: {integrity: sha512-iP4DebzoNlP/YN2dpwCgb8zoCmhtkajzS48JvwmkSkXvPI3DHc7m+XYL5tGnSlJtR6nImXZmdCuN5aP8dh1d8A==}
     dependencies:
@@ -3318,6 +3344,10 @@ packages:
     resolution: {integrity: sha512-EiPU8G6dQG0GFHNR8ljnZFki/8a+cQwEQ+7wpxdChl02Q8HXlwEZWD5lqAF8vC2sEC3Tehr8hy7vErz88LHyUA==}
     engines: {node: ^14.18.0 || >=16.10.0}
     dev: true
+
+  /constants-browserify@1.0.0:
+    resolution: {integrity: sha512-xFxOwqIzR/e1k1gLiWEophSCMqXcwVHIH7akf7b/vxcUeGunlj3hvZaaqxwHsTgn+IndtkQJgSztIDWeumWJDQ==}
+    dev: false
 
   /content-disposition@1.0.0:
     resolution: {integrity: sha512-Au9nRL8VNUut/XSzbQA38+M78dzP4D+eqg3gfJHMIHHYa3bg067xj1KxMUWj+VULbiZMowKngFFbKczUrNJ1mg==}
@@ -4359,6 +4389,17 @@ packages:
       combined-stream: 1.0.8
       es-set-tostringtag: 2.1.0
       mime-types: 2.1.35
+
+  /form-data@4.0.5:
+    resolution: {integrity: sha512-8RipRLol37bNs2bhoV67fiTEvdTrbMUYcFTiy3+wuuOnUog2QBHCZWXDRijWQfAkhBj2Uf5UnVaiWwA5vdd82w==}
+    engines: {node: '>= 6'}
+    dependencies:
+      asynckit: 0.4.0
+      combined-stream: 1.0.8
+      es-set-tostringtag: 2.1.0
+      hasown: 2.0.2
+      mime-types: 2.1.35
+    dev: false
 
   /formidable@1.2.6:
     resolution: {integrity: sha512-KcpbcpuLNOwrEjnbpMC0gS+X8ciDoZE1kkqzat4a8vrprf+s9pKNQ/QIwWfbfs4ltgmFl3MD177SNTkve3BwGQ==}

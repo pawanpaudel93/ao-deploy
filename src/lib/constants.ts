@@ -3,10 +3,11 @@ export const APP_NAME = "ao-deploy";
 export const defaultServices = {
   gatewayUrl: "https://arweave.net",
   cuUrl: "https://cu.ao-testnet.xyz",
-  muUrl: "https://mu.ao-testnet.xyz"
+  muUrl: "https://mu.ao-testnet.xyz",
+  hbUrl: "https://push.forward.computer"
 };
 
-export const aoExplorerUrl = "https://www.ao.link";
+export const aoExplorerUrl = "https://aolink.arweave.net";
 
 export const AOS_QUERY = `query ($owners: [String!]!, $names: [String!]!) {
     transactions(

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import chalk from "chalk";
-import { Command } from "commander";
+import { Command, Option } from "commander";
 import fs from "node:fs";
 import path from "node:path";
 import process, { emitWarning } from "node:process";
@@ -149,6 +149,12 @@ program
     "https://mu.ao-testnet.xyz"
   )
   .option(
+    "--hb-url [url]",
+    "Hyperbeam Node URL to connect to.",
+    parseUrl,
+    "https://push.forward.computer"
+  )
+  .option(
     "--concurrency [limit]",
     "Concurrency limit for deploying multiple processes.",
     parseToInt,
@@ -173,6 +179,11 @@ program
   .option(
     "--force-spawn",
     "Force spawning a new process without checking for existing ones."
+  )
+  .addOption(
+    new Option("--network [network]", "Network to use for deployment.")
+      .choices(["mainnet", "legacy"])
+      .default("mainnet")
   );
 
 program.parse(process.argv);
@@ -220,7 +231,8 @@ async function deploymentHandler() {
         services: {
           gatewayUrl: options.gatewayUrl,
           cuUrl: options.cuUrl,
-          muUrl: options.muUrl
+          muUrl: options.muUrl,
+          hbUrl: options.hbUrl
         },
         minify: options.minify,
         onBoot: options.onBoot,
@@ -229,7 +241,8 @@ async function deploymentHandler() {
         browserConfig: {
           browser: options.browser,
           browserProfile: options.browserProfile
-        }
+        },
+        network: options.network
       });
       logDeploymentDetails(result);
     } else {

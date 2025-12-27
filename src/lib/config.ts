@@ -103,7 +103,8 @@ export class ConfigManager {
       (typeof services === "object" &&
         (services.gatewayUrl === undefined || isUrl(services?.gatewayUrl)) &&
         (services.cuUrl === undefined || isUrl(services?.cuUrl)) &&
-        (services.muUrl === undefined || isUrl(services?.muUrl)));
+        (services.muUrl === undefined || isUrl(services?.muUrl)) &&
+        (services.hbUrl === undefined || isUrl(services?.hbUrl)));
 
     if (!isValid) {
       throw new Error(
@@ -208,6 +209,19 @@ export class ConfigManager {
     return true;
   }
 
+  static #validateNetwork(
+    network: DeployConfig["network"],
+    keyName: string
+  ): boolean {
+    if (network && network !== "mainnet" && network !== "legacy") {
+      throw new Error(
+        `Invalid "network" value in configuration for "${keyName}": ${jsonStringify(network)}`
+      );
+    }
+
+    return true;
+  }
+
   static isValidConfig(config: Config): boolean {
     // Check if config exists, is an object, and is not empty
     if (
@@ -256,6 +270,7 @@ export class ConfigManager {
       this.#validateRetry(deployConfig.retry, name);
       this.#validateServices(deployConfig.services, name);
       this.#validateBrowserConfig(deployConfig.browserConfig, name);
+      this.#validateNetwork(deployConfig.network, name);
 
       if (deployConfig.cron && !isCronPattern(deployConfig.cron)) {
         throw new Error(

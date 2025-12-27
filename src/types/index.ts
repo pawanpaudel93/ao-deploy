@@ -25,6 +25,12 @@ export interface Services {
    * @default "https://mu.ao-testnet.xyz"
    */
   muUrl?: string;
+
+  /**
+   * Hyperbeam URL to use for deployment
+   * @default "https://push.forward.computer"
+   */
+  hbUrl?: string;
 }
 
 export type DeployConfig = {
@@ -47,7 +53,8 @@ export type DeployConfig = {
 
   /**
    * Scheduler to use for Process
-   * @default "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA"
+   * @default "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA" for legacy
+   * @default "n_XZJhUnmldNFo4dhajoPZWhBXuJk-OcQr5JQ49c4Zo" for mainnet
    */
   scheduler?: string;
 
@@ -113,6 +120,12 @@ export type DeployConfig = {
    * @default false
    */
   minify?: boolean;
+
+  /**
+   * Network to use for deployment
+   * @default "mainnet"
+   */
+  network?: "mainnet" | "legacy";
 
   /**
    * Custom function to transform contract code before deployment

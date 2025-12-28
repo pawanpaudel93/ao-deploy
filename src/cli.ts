@@ -360,6 +360,9 @@ async function buildHandler() {
     } else {
       await deploymentHandler();
     }
+
+    // Explicitly exit after successful completion to ensure all handles are closed
+    process.exit(0);
   } catch (error: any) {
     const logger = Logger.init(packageJson.name);
 

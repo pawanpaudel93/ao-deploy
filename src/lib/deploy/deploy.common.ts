@@ -330,6 +330,9 @@ export class BaseDeploymentsManager {
       });
 
       if (onBoot) {
+        if (!isSharedWallet) {
+          await walletInstance.close("success");
+        }
         return { name, processId, isNewProcess, configName };
       }
     }

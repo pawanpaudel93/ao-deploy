@@ -109,8 +109,7 @@ program
   )
   .option(
     "-s, --scheduler [scheduler]",
-    "Scheduler to be used for the process.",
-    "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA"
+    "Scheduler to be used for the process."
   )
   .option("-m, --module [module]", "Module source for spawning the process.")
   .option(

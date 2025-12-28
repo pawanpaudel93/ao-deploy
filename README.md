@@ -136,7 +136,7 @@ Options:
   -l, --lua-path [luaPath]      Specify the Lua modules path seperated by semicolon.
   -d, --deploy [deploy]         List of deployment configuration names, separated by commas.
   -b, --build [build]           List of deployment configuration names, separated by commas.
-  -s, --scheduler [scheduler]   Scheduler to be used for the process. (default: "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA")
+  -s, --scheduler [scheduler]   Scheduler to be used for the process.
   -m, --module [module]         Module source for spawning the process.
   -c, --cron [interval]         Cron interval for the process (e.g. 1-minute, 5-minutes).
   -t, --tags [tags...]          Additional tags for spawning the process.

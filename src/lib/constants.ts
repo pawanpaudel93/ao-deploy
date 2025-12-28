@@ -22,6 +22,10 @@ export const AOS_QUERY = `query ($owners: [String!]!, $names: [String!]!) {
       edges {
         node {
           id
+          tags {
+            name
+            value
+          }
         }
       }
     }

@@ -7,6 +7,8 @@ export interface Tag {
   value: string;
 }
 
+export type Network = "mainnet" | "legacy";
+
 export interface Services {
   /**
    * The URL of the desired Gateway.
@@ -125,7 +127,7 @@ export type DeployConfig = {
    * Network to use for deployment
    * @default "mainnet"
    */
-  network?: "mainnet" | "legacy";
+  network?: Network;
 
   /**
    * Custom function to transform contract code before deployment

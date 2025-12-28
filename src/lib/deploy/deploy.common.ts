@@ -4,7 +4,9 @@ import type {
   AosConfig,
   DeployConfig,
   DeployResult,
-  Services
+  Network,
+  Services,
+  Tag
 } from "../../types";
 import { AOS_QUERY, APP_NAME, defaultServices } from "../constants";
 import { Logger } from "../logger";
@@ -31,12 +33,13 @@ export class BaseDeploymentsManager {
 
   protected validateServices(services?: Services) {
     // Validate and use provided URLs or fall back to defaults
-    const { gatewayUrl, cuUrl, muUrl } = services ?? {};
+    const { gatewayUrl, cuUrl, muUrl, hbUrl } = services ?? {};
 
     services = {
       gatewayUrl: isUrl(gatewayUrl) ? gatewayUrl : defaultServices.gatewayUrl,
       cuUrl: isUrl(cuUrl) ? cuUrl : defaultServices.cuUrl,
-      muUrl: isUrl(muUrl) ? muUrl : defaultServices.muUrl
+      muUrl: isUrl(muUrl) ? muUrl : defaultServices.muUrl,
+      hbUrl: isUrl(hbUrl) ? hbUrl : defaultServices.hbUrl
     };
 
     return services;
@@ -134,7 +137,7 @@ export class BaseDeploymentsManager {
     retry: DeployConfig["retry"],
     gateway: string
   ) {
-    const processId = await retryWithDelay(
+    const { processId, tags } = await retryWithDelay(
       async () => {
         const res = await getArweave(gateway).api.post("/graphql", {
           query: AOS_QUERY,
@@ -143,13 +146,19 @@ export class BaseDeploymentsManager {
         if (!res.ok || res?.data?.data === null) {
           throw new Error(`(${res.status}) ${res.statusText} - GraphQL ERROR`);
         }
-        return res?.data?.data?.transactions?.edges?.[0]?.node?.id;
+        const transaction = res?.data?.data?.transactions?.edges?.[0]?.node;
+        const processId = transaction?.id;
+        const tags = (transaction?.tags || []) as Tag[];
+        return { processId, tags };
       },
       retry?.count,
       retry?.delay
     );
 
-    return processId;
+    const variant = tags.find((t) => t.name.toLowerCase() === "variant")?.value;
+    const network = (variant === "ao.TN.1" ? "legacy" : "mainnet") as Network;
+
+    return { processId, network };
   }
 
   protected validateCron(cron: string) {
@@ -194,24 +203,12 @@ export class BaseDeploymentsManager {
     };
 
     const logger = new Logger(configName, silent);
-    const hbUrl = services?.hbUrl || defaultServices.hbUrl;
-    const aosConfig = await this.getAosConfig(hbUrl, network);
-    module = isArweaveAddress(module)
-      ? module!
-      : sqlite
-        ? aosConfig.sqliteModule
-        : aosConfig.module;
-    scheduler = isArweaveAddress(scheduler) ? scheduler! : aosConfig.scheduler;
-    const authority = aosConfig.authority;
 
     const owner = await walletInstance.getAddress();
 
     const signer = walletInstance.getDataItemSigner();
 
     services = this.validateServices(services);
-
-    // Initialize the AO instance with validated URLs
-    const aoInstance = this.getAoInstance(services, signer, network, scheduler);
 
     logActionStatus(
       "deploy",
@@ -226,13 +223,18 @@ export class BaseDeploymentsManager {
       !forceSpawn &&
       (!processId || (processId && !isArweaveAddress(processId)))
     ) {
-      processId = await this.findProcess(
+      const processResult = await this.findProcess(
         name,
         owner,
         retry,
         services.gatewayUrl!
       );
+      processId = processResult.processId;
       isNewProcess = !processId;
+
+      if (!isNewProcess && processResult.network) {
+        network = processResult.network;
+      }
     }
 
     let contractSrc = (await getContractSource()) || "";
@@ -265,6 +267,19 @@ export class BaseDeploymentsManager {
       logger.log("Minifying contract...", false, false);
       contractSrc = await minifyLuaCode(contractSrc);
     }
+
+    const hbUrl = services?.hbUrl || defaultServices.hbUrl;
+    const aosConfig = await this.getAosConfig(hbUrl, network);
+    module = isArweaveAddress(module)
+      ? module!
+      : sqlite
+        ? aosConfig.sqliteModule
+        : aosConfig.module;
+    scheduler = isArweaveAddress(scheduler) ? scheduler! : aosConfig.scheduler;
+    const authority = aosConfig.authority;
+
+    // Initialize the AO instance with validated URLs
+    const aoInstance = this.getAoInstance(services, signer, network, scheduler);
 
     if (isNewProcess) {
       logger.log("Spawning new process...", false, true);

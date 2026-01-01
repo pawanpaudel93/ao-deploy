@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import chalk from "chalk";
-import { Command } from "commander";
+import { Command, Option } from "commander";
 import fs from "node:fs";
 import path from "node:path";
 import process, { emitWarning } from "node:process";
@@ -47,16 +47,18 @@ function getPackageJson() {
 }
 
 function logDeploymentDetails(result: DeployResult) {
-  const { messageId, processId, isNewProcess, configName } = result;
+  const { messageId, processId, isNewProcess, configName, network } = result;
   const processUrl = chalk.green(`${aoExplorerUrl}/#/entity/${processId}`);
   const logger = Logger.init(configName);
 
   if (isNewProcess) {
-    logger.log(`Deployed Process: ${processUrl}`);
+    logger.log(`✨ New process deployed: ${processUrl}`);
+  } else {
+    logger.log(`🔄 Existing process updated: ${processUrl}`);
   }
-  if (messageId) {
+  if (messageId && network === "legacy") {
     const messageUrl = chalk.green(`${aoExplorerUrl}/#/message/${messageId}`);
-    logger.log(`Deployment Message: ${messageUrl}`);
+    logger.log(`📨 Deployment message: ${messageUrl}`);
   }
 }
 
@@ -109,13 +111,17 @@ program
   )
   .option(
     "-s, --scheduler [scheduler]",
-    "Scheduler to be used for the process.",
-    "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA"
+    "Scheduler to be used for the process."
   )
   .option("-m, --module [module]", "Module source for spawning the process.")
   .option(
     "-c, --cron [interval]",
     "Cron interval for the process (e.g. 1-minute, 5-minutes)."
+  )
+  .option(
+    "--cron-action [cronAction]",
+    "Cron tag action for the process.",
+    "Cron"
   )
   .option("-t, --tags [tags...]", "Additional tags for spawning the process.")
   .option(
@@ -149,6 +155,12 @@ program
     "https://mu.ao-testnet.xyz"
   )
   .option(
+    "--hb-url [url]",
+    "Hyperbeam Node URL to connect to.",
+    parseUrl,
+    "https://push.forward.computer"
+  )
+  .option(
     "--concurrency [limit]",
     "Concurrency limit for deploying multiple processes.",
     parseToInt,
@@ -173,6 +185,12 @@ program
   .option(
     "--force-spawn",
     "Force spawning a new process without checking for existing ones."
+  )
+  .option("--legacy", "Deploy to legacy network.")
+  .addOption(
+    new Option("--network [network]", "Network to use for deployment.")
+      .choices(["mainnet", "legacy"])
+      .default("mainnet")
   );
 
 program.parse(process.argv);
@@ -208,6 +226,7 @@ async function deploymentHandler() {
         scheduler: options.scheduler,
         module: options.module,
         cron: options.cron,
+        cronAction: options.cronAction,
         tags,
         retry: {
           count: parseToInt(options.retryCount, 3),
@@ -220,7 +239,8 @@ async function deploymentHandler() {
         services: {
           gatewayUrl: options.gatewayUrl,
           cuUrl: options.cuUrl,
-          muUrl: options.muUrl
+          muUrl: options.muUrl,
+          hbUrl: options.hbUrl
         },
         minify: options.minify,
         onBoot: options.onBoot,
@@ -229,7 +249,8 @@ async function deploymentHandler() {
         browserConfig: {
           browser: options.browser,
           browserProfile: options.browserProfile
-        }
+        },
+        network: options.legacy ? "legacy" : options.network
       });
       logDeploymentDetails(result);
     } else {
@@ -347,6 +368,9 @@ async function buildHandler() {
     } else {
       await deploymentHandler();
     }
+
+    // Explicitly exit after successful completion to ensure all handles are closed
+    process.exit(0);
   } catch (error: any) {
     const logger = Logger.init(packageJson.name);
 

@@ -4,7 +4,9 @@ import type {
   AosConfig,
   DeployConfig,
   DeployResult,
-  Services
+  Network,
+  Services,
+  Tag
 } from "../../types";
 import { AOS_QUERY, APP_NAME, defaultServices } from "../constants";
 import { Logger } from "../logger";
@@ -31,56 +33,96 @@ export class BaseDeploymentsManager {
 
   protected validateServices(services?: Services) {
     // Validate and use provided URLs or fall back to defaults
-    const { gatewayUrl, cuUrl, muUrl } = services ?? {};
+    const { gatewayUrl, cuUrl, muUrl, hbUrl } = services ?? {};
 
     services = {
       gatewayUrl: isUrl(gatewayUrl) ? gatewayUrl : defaultServices.gatewayUrl,
       cuUrl: isUrl(cuUrl) ? cuUrl : defaultServices.cuUrl,
-      muUrl: isUrl(muUrl) ? muUrl : defaultServices.muUrl
+      muUrl: isUrl(muUrl) ? muUrl : defaultServices.muUrl,
+      hbUrl: isUrl(hbUrl) ? hbUrl : defaultServices.hbUrl
     };
 
     return services;
   }
 
-  protected getAoInstance(services: Services): any {
-    if (
-      (!services.cuUrl || services.cuUrl === defaultServices.cuUrl) &&
-      (!services.gatewayUrl ||
-        services.gatewayUrl === defaultServices.gatewayUrl) &&
-      (!services.muUrl || services.muUrl === defaultServices.muUrl)
-    ) {
-      return connect({ MODE: "legacy" });
+  protected getAoInstance(
+    services: Services,
+    signer: any,
+    network: DeployConfig["network"],
+    scheduler: string
+  ): any {
+    const isLegacy = network === "legacy";
+
+    if (isLegacy) {
+      const useDefaults =
+        (!services.cuUrl || services.cuUrl === defaultServices.cuUrl) &&
+        (!services.gatewayUrl ||
+          services.gatewayUrl === defaultServices.gatewayUrl) &&
+        (!services.muUrl || services.muUrl === defaultServices.muUrl);
+
+      return useDefaults
+        ? connect({ MODE: "legacy", SCHEDULER: scheduler })
+        : connect({
+            MODE: "legacy",
+            GATEWAY_URL: services.gatewayUrl,
+            MU_URL: services.muUrl,
+            CU_URL: services.cuUrl,
+            SCHEDULER: scheduler
+          });
     }
 
+    const hbUrl =
+      services.hbUrl && services.hbUrl !== defaultServices.hbUrl
+        ? services.hbUrl
+        : defaultServices.hbUrl;
+
     return connect({
-      MODE: "legacy",
-      GATEWAY_URL: services.gatewayUrl,
-      MU_URL: services.muUrl,
-      CU_URL: services.cuUrl
+      MODE: "mainnet",
+      URL: hbUrl,
+      SCHEDULER: scheduler,
+      signer
     });
   }
 
-  protected async getAosConfig() {
-    if (this.cachedAosConfig) {
-      return this.cachedAosConfig;
+  protected async getAosConfig(
+    hbUrl: string,
+    network: DeployConfig["network"]
+  ): Promise<AosConfig> {
+    if (this.cachedAosConfig) return this.cachedAosConfig;
+
+    const isMainnet = network === "mainnet";
+
+    const scheduler = isMainnet
+      ? "n_XZJhUnmldNFo4dhajoPZWhBXuJk-OcQr5JQ49c4Zo"
+      : "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA";
+
+    let authority = "fcoN_xJeisVsPXA-trzVAuIiqO3ydLQxM-L4XbrQKzY";
+
+    if (isMainnet) {
+      const response = await fetch(`${hbUrl}/~meta@1.0/info/address`);
+      const data = (await response.text()).trim();
+      if (!isArweaveAddress(data)) {
+        throw new Error("Invalid authority address");
+      }
+      authority = data;
     }
 
     const defaultDetails = {
-      module: "cNlipBptaF9JeFAf4wUmpi43EojNanIBos3EfNrEOWo",
-      sqliteModule: "u1Ju_X8jiuq4rX9Nh-ZGRQuYQZgV2MKLMT3CZsykk54",
-      scheduler: "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA",
-      authority: "fcoN_xJeisVsPXA-trzVAuIiqO3ydLQxM-L4XbrQKzY"
+      module: "ISShJH1ij-hPPt9St5UFFr_8Ys3Kj5cyg7zrMGt7H9s",
+      sqliteModule: "ei1VSwheQnNIG87iqlwxiQk-sWY5ikj4DFBxcpFZ-S4",
+      scheduler,
+      authority
     };
 
     try {
       const response = await fetch(
-        "https://raw.githubusercontent.com/pawanpaudel93/ao-deploy-config/main/config.json"
+        "https://raw.githubusercontent.com/permaweb/aos/refs/heads/main/package.json"
       );
-      const config = (await response.json()) as AosConfig;
+      const config = await response.json();
       this.cachedAosConfig = {
-        module: config?.module || defaultDetails.module,
-        sqliteModule: config?.sqliteModule || defaultDetails.sqliteModule,
-        scheduler: config?.scheduler || defaultDetails.scheduler,
+        module: config?.aos?.module || defaultDetails.module,
+        sqliteModule: config?.aos?.sqlite || defaultDetails.sqliteModule,
+        scheduler: defaultDetails.scheduler,
         authority: defaultDetails.authority
       };
       return this.cachedAosConfig;
@@ -95,7 +137,7 @@ export class BaseDeploymentsManager {
     retry: DeployConfig["retry"],
     gateway: string
   ) {
-    const processId = await retryWithDelay(
+    const { processId, tags } = await retryWithDelay(
       async () => {
         const res = await getArweave(gateway).api.post("/graphql", {
           query: AOS_QUERY,
@@ -104,13 +146,19 @@ export class BaseDeploymentsManager {
         if (!res.ok || res?.data?.data === null) {
           throw new Error(`(${res.status}) ${res.statusText} - GraphQL ERROR`);
         }
-        return res?.data?.data?.transactions?.edges?.[0]?.node?.id;
+        const transaction = res?.data?.data?.transactions?.edges?.[0]?.node;
+        const processId = transaction?.id;
+        const tags = (transaction?.tags || []) as Tag[];
+        return { processId, tags };
       },
       retry?.count,
       retry?.delay
     );
 
-    return processId;
+    const variant = tags.find((t) => t.name.toLowerCase() === "variant")?.value;
+    const network = (variant === "ao.TN.1" ? "legacy" : "mainnet") as Network;
+
+    return { processId, network };
   }
 
   protected validateCron(cron: string) {
@@ -127,6 +175,7 @@ export class BaseDeploymentsManager {
     getContractSource,
     tags,
     cron,
+    cronAction,
     module,
     scheduler,
     retry,
@@ -138,6 +187,7 @@ export class BaseDeploymentsManager {
     contractTransformer,
     onBoot,
     blueprints,
+    network = "mainnet",
     silent = false,
     forceSpawn = false,
     isSharedWallet = false
@@ -154,22 +204,12 @@ export class BaseDeploymentsManager {
     };
 
     const logger = new Logger(configName, silent);
-    const aosConfig = await this.getAosConfig();
-    module = isArweaveAddress(module)
-      ? module!
-      : sqlite
-        ? aosConfig.sqliteModule
-        : aosConfig.module;
-    scheduler = isArweaveAddress(scheduler) ? scheduler! : aosConfig.scheduler;
 
     const owner = await walletInstance.getAddress();
 
     const signer = walletInstance.getDataItemSigner();
 
     services = this.validateServices(services);
-
-    // Initialize the AO instance with validated URLs
-    const aoInstance = this.getAoInstance(services);
 
     logActionStatus(
       "deploy",
@@ -184,13 +224,18 @@ export class BaseDeploymentsManager {
       !forceSpawn &&
       (!processId || (processId && !isArweaveAddress(processId)))
     ) {
-      processId = await this.findProcess(
+      const processResult = await this.findProcess(
         name,
         owner,
         retry,
         services.gatewayUrl!
       );
+      processId = processResult.processId;
       isNewProcess = !processId;
+
+      if (!isNewProcess && processResult.network) {
+        network = processResult.network;
+      }
     }
 
     let contractSrc = (await getContractSource()) || "";
@@ -224,6 +269,19 @@ export class BaseDeploymentsManager {
       contractSrc = await minifyLuaCode(contractSrc);
     }
 
+    const hbUrl = services?.hbUrl || defaultServices.hbUrl;
+    const aosConfig = await this.getAosConfig(hbUrl, network);
+    module = isArweaveAddress(module)
+      ? module!
+      : sqlite
+        ? aosConfig.sqliteModule
+        : aosConfig.module;
+    scheduler = isArweaveAddress(scheduler) ? scheduler! : aosConfig.scheduler;
+    const authority = aosConfig.authority;
+
+    // Initialize the AO instance with validated URLs
+    const aoInstance = this.getAoInstance(services, signer, network, scheduler);
+
     if (isNewProcess) {
       logger.log("Spawning new process...", false, true);
       tags = Array.isArray(tags) ? tags : [];
@@ -244,13 +302,21 @@ export class BaseDeploymentsManager {
         tags = [
           ...tags,
           { name: "Cron-Interval", value: cron },
-          { name: "Cron-Tag-Action", value: "Cron" }
+          { name: "Cron-Tag-Action", value: cronAction || "Cron" }
         ];
       }
 
       const data = onBoot ? contractSrc : "1984";
       processId = await retryWithDelay(
-        () => aoInstance.spawn({ module, signer, tags, data, scheduler }),
+        () =>
+          aoInstance.spawn({
+            module,
+            signer,
+            tags,
+            data,
+            scheduler,
+            authority
+          }),
         retry.count,
         retry.delay
       );
@@ -265,7 +331,10 @@ export class BaseDeploymentsManager {
       });
 
       if (onBoot) {
-        return { name, processId, isNewProcess, configName };
+        if (!isSharedWallet) {
+          await walletInstance.close("success");
+        }
+        return { name, processId, isNewProcess, configName, network };
       }
     }
 
@@ -324,7 +393,8 @@ export class BaseDeploymentsManager {
       processId: processId!,
       messageId: messageId!,
       isNewProcess,
-      configName
+      configName,
+      network
     };
   }
 

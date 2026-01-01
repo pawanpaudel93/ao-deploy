@@ -7,6 +7,9 @@
 
 A package for deploying AO contracts with support for both Node.js and web environments.
 
+> [!Important]
+> **Mainnet is now the default!** Starting from the latest version, `ao-deploy` uses the **mainnet** network powered by Hyperbeam by default. If you need to deploy to the legacy network, use the `--network legacy`, `--legacy` flag or set `network: "legacy"` in your configuration.
+
 ## Table of Contents
 
 - [Features](#features)
@@ -17,6 +20,10 @@ A package for deploying AO contracts with support for both Node.js and web envir
 - [Usage](#usage)
   - [CLI Examples](#cli)
     - [Basic Deployment](#basic-deployment)
+    - [Network Configuration](#network-configuration)
+      - [Mainnet Network (Default)](#mainnet-network-default)
+      - [Legacy Network](#legacy-network)
+      - [Custom Hyperbeam Node](#custom-hyperbeam-node)
     - [Browser Wallet](#browser-wallet)
       - [Advanced Browser Configuration](#advanced-browser-configuration)
       - [Using a Configuration File](#using-a-configuration-file)
@@ -52,6 +59,7 @@ A package for deploying AO contracts with support for both Node.js and web envir
 - 📝 Contract minification and transformation
 - 🧩 Blueprint support
 - 🛠️ CLI and API interfaces
+- 🌟 Hyperbeam mainnet support
 
 ## Installation
 
@@ -128,9 +136,10 @@ Options:
   -l, --lua-path [luaPath]      Specify the Lua modules path seperated by semicolon.
   -d, --deploy [deploy]         List of deployment configuration names, separated by commas.
   -b, --build [build]           List of deployment configuration names, separated by commas.
-  -s, --scheduler [scheduler]   Scheduler to be used for the process. (default: "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA")
+  -s, --scheduler [scheduler]   Scheduler to be used for the process.
   -m, --module [module]         Module source for spawning the process.
   -c, --cron [interval]         Cron interval for the process (e.g. 1-minute, 5-minutes).
+  --cron-action [cronAction]    Cron tag action for the process. (default: "Cron")
   -t, --tags [tags...]          Additional tags for spawning the process.
   -p, --process-id [processId]  Specify process Id of existing process.
   --build-only                  Bundle the contract into a single file and store it in the process-dist directory.
@@ -138,6 +147,7 @@ Options:
   --gateway-url [url]           Custom Gateway URL to connect to. (default: "https://arweave.net")
   --cu-url [url]                Custom Compute Unit (CU) URL to connect to. (default: "https://cu.ao-testnet.xyz")
   --mu-url [url]                Custom Messenger Unit (MU) URL to connect to. (default: "https://mu.ao-testnet.xyz")
+  --hb-url [url]                Hyperbeam Node URL to connect to. (default: "https://push.forward.computer")
   --concurrency [limit]         Concurrency limit for deploying multiple processes. (default: 5)
   --sqlite                      Use sqlite aos module when spawning new process.
   --retry-count [count]         Number of retries for deploying contract. (default: 3)
@@ -146,6 +156,8 @@ Options:
   --on-boot                     Load contract when process is spawned. (default: false)
   --blueprints [blueprints...]  Blueprints to use for the contract.
   --force-spawn                 Force spawning a new process without checking for existing ones. (default: false)
+  --network [network]           Network to use for deployment. (choices: "mainnet", "legacy", default: "mainnet")
+  --legacy                      Deploy to legacy network. (default: false)
   -h, --help                    display help for command
 ```
 
@@ -153,6 +165,43 @@ Options:
 
 ```sh
 ao-deploy process.lua -n tictactoe -w wallet.json --tags name1:value1 name2:value2
+```
+
+> [!Note]
+> By default, deployments use the **mainnet** network powered by Hyperbeam. To deploy to the legacy network, use the `--network legacy` flag.
+
+#### Network Configuration
+
+##### Mainnet Network (Default)
+
+By default, `ao-deploy` uses the **mainnet** network powered by Hyperbeam:
+
+```sh
+ao-deploy process.lua -n tictactoe -w wallet.json
+# or explicitly specify mainnet
+ao-deploy process.lua -n tictactoe -w wallet.json --network mainnet
+```
+
+##### Legacy Network
+
+To deploy to the legacy AO network:
+
+```sh
+ao-deploy process.lua -n tictactoe -w wallet.json --network legacy
+```
+
+Or use the `--legacy` flag:
+
+```sh
+ao-deploy process.lua -n tictactoe -w wallet.json --legacy
+```
+
+##### Custom Hyperbeam Node
+
+You can specify a custom Hyperbeam node URL for mainnet deployments:
+
+```sh
+ao-deploy process.lua -n tictactoe -w wallet.json --hb-url https://custom-hyperbeam-node.com
 ```
 
 #### Advanced Options
@@ -241,7 +290,8 @@ const config = defineConfig({
     name: `contract-1`,
     contractPath: "contract-1.lua",
     wallet,
-    minify: true // Minify the contract before deployment
+    minify: true, // Minify the contract before deployment
+    network: "mainnet" // Deploy to mainnet (default)
   },
   contract_2: {
     luaPath,
@@ -251,6 +301,11 @@ const config = defineConfig({
     browserConfig: {
       browser: "brave", // Use Brave browser
       browserProfile: "Work" // Use profile 1
+    },
+    network: "legacy", // Deploy to legacy network
+    services: {
+      cuUrl: "https://cu.ao-testnet.xyz",
+      muUrl: "https://mu.ao-testnet.xyz"
     },
     // Custom source transformer function
     contractTransformer: (source) => {
@@ -262,7 +317,11 @@ const config = defineConfig({
     luaPath,
     name: `contract-3`,
     contractPath: "contract-3.lua",
-    wallet
+    wallet,
+    network: "mainnet",
+    services: {
+      hbUrl: "https://push.forward.computer" // Custom Hyperbeam node
+    }
   }
 });
 
@@ -382,12 +441,72 @@ async function main() {
         delay: 3000
       }
     });
-    const processUrl = `https://www.ao.link/#/entity/${processId}`;
+    const processUrl = `https://aolink.arweave.net/#/entity/${processId}`;
     console.log(`Deployed Process: ${processUrl}`);
     if (messageId) {
-      const messageUrl = `https://www.ao.link/#/message/${messageId}`;
+      const messageUrl = `https://aolink.arweave.net/#/message/${messageId}`;
       console.log(`Deployment Message: ${messageUrl}`);
     }
+  } catch (error: any) {
+    console.log(
+      `Deployment failed!: ${error?.message ?? "Failed to deploy contract!"}\n`
+    );
+  }
+}
+
+main();
+```
+
+##### Mainnet Deployment with Custom Hyperbeam Node
+
+```ts
+import { deployContract } from "ao-deploy";
+
+async function main() {
+  try {
+    const { messageId, processId } = await deployContract({
+      name: "demo",
+      wallet: "wallet.json",
+      contractPath: "process.lua",
+      network: "mainnet", // Use mainnet (default)
+      services: {
+        hbUrl: "https://push.forward.computer" // Custom Hyperbeam node (optional)
+      },
+      tags: [{ name: "Custom", value: "Tag" }]
+    });
+    const processUrl = `https://aolink.arweave.net/#/entity/${processId}`;
+    console.log(`Deployed Process: ${processUrl}`);
+  } catch (error: any) {
+    console.log(
+      `Deployment failed!: ${error?.message ?? "Failed to deploy contract!"}\n`
+    );
+  }
+}
+
+main();
+```
+
+##### Legacy Network Deployment
+
+```ts
+import { deployContract } from "ao-deploy";
+
+async function main() {
+  try {
+    const { messageId, processId } = await deployContract({
+      name: "demo",
+      wallet: "wallet.json",
+      contractPath: "process.lua",
+      network: "legacy", // Use legacy network
+      services: {
+        cuUrl: "https://cu.ao-testnet.xyz",
+        muUrl: "https://mu.ao-testnet.xyz",
+        gatewayUrl: "https://arweave.net"
+      },
+      tags: [{ name: "Custom", value: "Tag" }]
+    });
+    const processUrl = `https://aolink.arweave.net/#/entity/${processId}`;
+    console.log(`Deployed Process: ${processUrl}`);
   } catch (error: any) {
     console.log(
       `Deployment failed!: ${error?.message ?? "Failed to deploy contract!"}\n`
@@ -419,10 +538,10 @@ async function main() {
         delay: 3000
       }
     });
-    const processUrl = `https://www.ao.link/#/entity/${processId}`;
+    const processUrl = `https://aolink.arweave.net/#/entity/${processId}`;
     console.log(`Deployed Process: ${processUrl}`);
     if (messageId) {
-      const messageUrl = `https://www.ao.link/#/message/${messageId}`;
+      const messageUrl = `https://aolink.arweave.net/#/message/${messageId}`;
       console.log(`Deployment Message: ${messageUrl}`);
     }
   } catch (error: any) {
@@ -460,6 +579,7 @@ end)
     const { messageId, processId } = await deployContract({
       name: "web-demo",
       contractSrc: contractSrc,
+      network: "mainnet", // Use mainnet (default)
       tags: [{ name: "Environment", value: "Web" }],
       retry: {
         count: 5,
@@ -467,10 +587,10 @@ end)
       }
     });
     
-    const processUrl = `https://www.ao.link/#/entity/${processId}`;
+    const processUrl = `https://aolink.arweave.net/#/entity/${processId}`;
     console.log(`Deployed Process: ${processUrl}`);
     if (messageId) {
-      const messageUrl = `https://www.ao.link/#/message/${messageId}`;
+      const messageUrl = `https://aolink.arweave.net/#/message/${messageId}`;
       console.log(`Deployment Message: ${messageUrl}`);
     }
   } catch (error: any) {
@@ -492,9 +612,10 @@ The `deployContract` function accepts the following parameters within the Deploy
 - `name` (optional): The process name to spawn. Defaults to "default".
 - `contractSrc` (optional): The contract source code as a string. **Required for web environments.**
 - `module` (optional): The module source to use. Defaults to fetching from the AOS's GitHub repository.
-- `scheduler` (optional): The scheduler to use for the process. Defaults to `_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA`.
+- `scheduler` (optional): The scheduler to use for the process. Defaults to `n_XZJhUnmldNFo4dhajoPZWhBXuJk-OcQr5JQ49c4Zo` for mainnet and `_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA` for legacy.
 - `tags` (optional): Additional tags to use for spawning the process.
 - `cron` (optional): The cron interval for the process, e.g., "1-minute", "5-minutes". Use format `interval-(second, seconds, minute, minutes, hour, hours, day, days, month, months, year, years, block, blocks, Second, Seconds, Minute, Minutes, Hour, Hours, Day, Days, Month, Months, Year, Years, Block, Blocks)`
+- `cronAction` (optional): The cron tag action to use for the process. Defaults to "Cron".
 - `retry` (optional): Retry options with `count` and `delay` properties. By default, it will retry up to `3` times with a `1000` milliseconds delay between attempts.
 - `processId` (optional): The process id of existing process.
 - `minify` (optional): Reduce the size of the contract before deployment.
@@ -503,6 +624,12 @@ The `deployContract` function accepts the following parameters within the Deploy
 - `silent` (optional): Disable logging to console. (default: false)
 - `blueprints` (optional): Blueprints to use for the contract.
 - `forceSpawn` (optional): Force spawning a new process without checking for existing ones. (default: false)
+- `network` (optional): Network to use for deployment. Options: "mainnet" (default) or "legacy".
+- `services` (optional): Configuration for AO services.
+  - `gatewayUrl` (optional): Gateway URL. Defaults to `https://arweave.net`.
+  - `cuUrl` (optional): Compute Unit URL (legacy network only). Defaults to `https://cu.ao-testnet.xyz`.
+  - `muUrl` (optional): Messenger Unit URL (legacy network only). Defaults to `https://mu.ao-testnet.xyz`.
+  - `hbUrl` (optional): Hyperbeam Node URL (mainnet only). Defaults to `https://push.forward.computer`.
 
 **Node.js Only Parameters:**
 
@@ -537,7 +664,8 @@ async function main() {
           retry: {
             count: 10,
             delay: 3000
-          }
+          },
+          network: "mainnet"
         },
         {
           name: "demo2",
@@ -547,7 +675,8 @@ async function main() {
           retry: {
             count: 10,
             delay: 3000
-          }
+          },
+          network: "legacy"
         }
       ],
       2
@@ -555,10 +684,10 @@ async function main() {
     results.forEach((result, idx) => {
       if (result.status === "fulfilled") {
         const { processId, messageId } = result.value;
-        const processUrl = `https://www.ao.link/#/entity/${processId}`;
+        const processUrl = `https://aolink.arweave.net/#/entity/${processId}`;
         console.log(`Deployed Process: ${processUrl}`);
         if (messageId) {
-          const messageUrl = `https://www.ao.link/#/message/${messageId}`;
+          const messageUrl = `https://aolink.arweave.net/#/message/${messageId}`;
           console.log(`Deployment Message: ${messageUrl}`);
         }
       } else {
@@ -637,10 +766,10 @@ end)
     results.forEach((result, idx) => {
       if (result.status === "fulfilled") {
         const { processId, messageId } = result.value;
-        const processUrl = `https://www.ao.link/#/entity/${processId}`;
+        const processUrl = `https://aolink.arweave.net/#/entity/${processId}`;
         console.log(`Deployed Process ${idx + 1}: ${processUrl}`);
         if (messageId) {
-          const messageUrl = `https://www.ao.link/#/message/${messageId}`;
+          const messageUrl = `https://aolink.arweave.net/#/message/${messageId}`;
           console.log(`Deployment Message: ${messageUrl}`);
         }
       } else {

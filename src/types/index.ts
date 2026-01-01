@@ -7,6 +7,8 @@ export interface Tag {
   value: string;
 }
 
+export type Network = "mainnet" | "legacy";
+
 export interface Services {
   /**
    * The URL of the desired Gateway.
@@ -25,6 +27,12 @@ export interface Services {
    * @default "https://mu.ao-testnet.xyz"
    */
   muUrl?: string;
+
+  /**
+   * Hyperbeam URL to use for deployment
+   * @default "https://push.forward.computer"
+   */
+  hbUrl?: string;
 }
 
 export type DeployConfig = {
@@ -47,7 +55,8 @@ export type DeployConfig = {
 
   /**
    * Scheduler to use for Process
-   * @default "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA"
+   * @default "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA" for legacy
+   * @default "n_XZJhUnmldNFo4dhajoPZWhBXuJk-OcQr5JQ49c4Zo" for mainnet
    */
   scheduler?: string;
 
@@ -60,6 +69,12 @@ export type DeployConfig = {
    * Cron interval to use for Process i.e (1-minute, 5-minutes)
    */
   cron?: string;
+
+  /**
+   * Cron tag action to use for Process i.e (Cron, Once)
+   * @default "Cron-Tick"
+   */
+  cronAction?: string;
 
   /**
    * Wallet path, JWK itself, or "browser" to use browser wallet (Wander or other compatible wallet)
@@ -113,6 +128,12 @@ export type DeployConfig = {
    * @default false
    */
   minify?: boolean;
+
+  /**
+   * Network to use for deployment
+   * @default "mainnet"
+   */
+  network?: Network;
 
   /**
    * Custom function to transform contract code before deployment
@@ -221,6 +242,7 @@ export interface DeployResult {
   messageId?: string;
   processId: string;
   isNewProcess: boolean;
+  network: Network;
 }
 
 export interface BundleResult {

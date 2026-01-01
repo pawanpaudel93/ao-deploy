@@ -4,7 +4,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { GQL } from "wao";
 import { deployContract, deployContracts } from "../src/lib/deploy/deploy.node";
 import { isArweaveAddress } from "../src/lib/utils/utils.common";
-import type { Services } from "../src/types";
+import type { Blueprint, Services } from "../src/types";
 
 const services: Services = {
   cuUrl: "http://localhost:4004",
@@ -38,6 +38,7 @@ describe("deploy", () => {
         wallet,
         blueprints: ["token"],
         services,
+        network: "legacy",
         silent: true
       });
 
@@ -59,6 +60,7 @@ describe("deploy", () => {
         wallet,
         contractPath: "test/fixtures/sample.lua",
         services,
+        network: "legacy",
         silent: true
       });
 
@@ -81,6 +83,7 @@ describe("deploy", () => {
         contractPath: "test/fixtures/sample.lua",
         blueprints: ["token"],
         services,
+        network: "legacy",
         silent: true
       });
 
@@ -93,7 +96,7 @@ describe("deploy", () => {
         deployContract({
           name: "test-invalid",
           // Use empty array to trigger validation failure while satisfying type check
-          blueprints: [] as unknown as import("../src/types").Blueprint[]
+          blueprints: [] as unknown as Blueprint[]
         })
       ).rejects.toThrow();
     });
@@ -107,6 +110,7 @@ describe("deploy", () => {
         blueprints: ["token"],
         cron: "5-minutes",
         services,
+        network: "legacy",
         silent: true
       });
 
@@ -137,6 +141,7 @@ describe("deploy", () => {
         contractPath: "test/fixtures/sample.lua",
         minify: true,
         services,
+        network: "legacy",
         silent: true
       });
 
@@ -151,6 +156,7 @@ describe("deploy", () => {
         blueprints: ["token"],
         scheduler: "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA",
         services,
+        network: "legacy",
         silent: true
       });
 
@@ -170,6 +176,7 @@ describe("deploy", () => {
         blueprints: ["token"],
         tags: customTags,
         services,
+        network: "legacy",
         silent: true
       });
 
@@ -192,6 +199,7 @@ describe("deploy", () => {
         blueprints: ["token"],
         onBoot: true,
         services,
+        network: "legacy",
         silent: true
       });
 
@@ -233,6 +241,7 @@ describe("deploy", () => {
         wallet,
         blueprints: ["token"],
         services,
+        network: "legacy",
         silent: true
       });
 
@@ -243,6 +252,7 @@ describe("deploy", () => {
         blueprints: ["token"],
         processId: initial.processId,
         services,
+        network: "legacy",
         silent: true
       });
 
@@ -263,6 +273,7 @@ describe("deploy", () => {
         wallet,
         blueprints: ["token"],
         services,
+        network: "legacy",
         silent: true
       });
 
@@ -273,6 +284,7 @@ describe("deploy", () => {
         blueprints: ["token"],
         forceSpawn: true,
         services,
+        network: "legacy",
         silent: true
       });
 
@@ -287,10 +299,9 @@ describe("deploy", () => {
         deployContract({
           name: "test-invalid",
           wallet,
-          blueprints: [
-            "invalid-blueprint" as unknown as import("../src/types").Blueprint
-          ],
+          blueprints: ["invalid-blueprint" as unknown as Blueprint],
           services,
+          network: "legacy",
           silent: true
         })
       ).rejects.toThrow();
@@ -303,6 +314,7 @@ describe("deploy", () => {
           wallet,
           contractPath: "invalid/path.lua",
           services,
+          network: "legacy",
           silent: true
         })
       ).rejects.toThrow();
@@ -318,6 +330,7 @@ describe("deploy", () => {
         contractPath: "test/fixtures/sample.lua",
         contractTransformer: (source) => `${transformComment}\n${source}`,
         services,
+        network: "legacy",
         silent: true
       });
 
@@ -337,6 +350,7 @@ describe("deploy", () => {
         contractPath: "test/fixtures/sample.lua",
         minify: true,
         services,
+        network: "legacy",
         silent: true
       });
 
@@ -364,6 +378,7 @@ describe("deploy", () => {
             delay: 3000
           },
           services,
+          network: "legacy" as const,
           silent: true
         },
         {
@@ -376,6 +391,7 @@ describe("deploy", () => {
             delay: 3000
           },
           services,
+          network: "legacy" as const,
           silent: true
         }
       ];
@@ -418,6 +434,7 @@ describe("deploy", () => {
           wallet,
           contractPath: "test/fixtures/sample.lua",
           services,
+          network: "legacy" as const,
           silent: true
         },
         {
@@ -425,6 +442,7 @@ describe("deploy", () => {
           wallet,
           contractPath: "invalid/path.lua", // Invalid path
           services,
+          network: "legacy" as const,
           silent: true
         }
       ];

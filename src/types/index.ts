@@ -71,6 +71,12 @@ export type DeployConfig = {
   cron?: string;
 
   /**
+   * Cron tag action to use for Process i.e (Cron, Once)
+   * @default "Cron-Tick"
+   */
+  cronAction?: string;
+
+  /**
    * Wallet path, JWK itself, or "browser" to use browser wallet (Wander or other compatible wallet)
    */
   wallet?: JWKInterface | "browser" | (string & {});
@@ -236,6 +242,7 @@ export interface DeployResult {
   messageId?: string;
   processId: string;
   isNewProcess: boolean;
+  network: Network;
 }
 
 export interface BundleResult {

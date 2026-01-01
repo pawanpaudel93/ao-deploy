@@ -47,7 +47,7 @@ function getPackageJson() {
 }
 
 function logDeploymentDetails(result: DeployResult) {
-  const { messageId, processId, isNewProcess, configName } = result;
+  const { messageId, processId, isNewProcess, configName, network } = result;
   const processUrl = chalk.green(`${aoExplorerUrl}/#/entity/${processId}`);
   const logger = Logger.init(configName);
 
@@ -56,7 +56,11 @@ function logDeploymentDetails(result: DeployResult) {
   }
   if (messageId) {
     const messageUrl = chalk.green(`${aoExplorerUrl}/#/message/${messageId}`);
-    logger.log(`Deployment Message: ${messageUrl}`);
+    if (network === "legacy") {
+      logger.log(`Deployment Message: ${messageUrl}`);
+    } else {
+      logger.log(`Deployment Slot: ${messageId}`);
+    }
   }
 }
 
@@ -115,6 +119,11 @@ program
   .option(
     "-c, --cron [interval]",
     "Cron interval for the process (e.g. 1-minute, 5-minutes)."
+  )
+  .option(
+    "--cron-action [cronAction]",
+    "Cron tag action for the process.",
+    "Cron"
   )
   .option("-t, --tags [tags...]", "Additional tags for spawning the process.")
   .option(
@@ -218,6 +227,7 @@ async function deploymentHandler() {
         scheduler: options.scheduler,
         module: options.module,
         cron: options.cron,
+        cronAction: options.cronAction,
         tags,
         retry: {
           count: parseToInt(options.retryCount, 3),

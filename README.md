@@ -139,6 +139,7 @@ Options:
   -s, --scheduler [scheduler]   Scheduler to be used for the process.
   -m, --module [module]         Module source for spawning the process.
   -c, --cron [interval]         Cron interval for the process (e.g. 1-minute, 5-minutes).
+  --cron-action [cronAction]    Cron tag action for the process. (default: "Cron")
   -t, --tags [tags...]          Additional tags for spawning the process.
   -p, --process-id [processId]  Specify process Id of existing process.
   --build-only                  Bundle the contract into a single file and store it in the process-dist directory.
@@ -607,6 +608,7 @@ The `deployContract` function accepts the following parameters within the Deploy
 - `scheduler` (optional): The scheduler to use for the process. Defaults to `n_XZJhUnmldNFo4dhajoPZWhBXuJk-OcQr5JQ49c4Zo` for mainnet and `_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA` for legacy.
 - `tags` (optional): Additional tags to use for spawning the process.
 - `cron` (optional): The cron interval for the process, e.g., "1-minute", "5-minutes". Use format `interval-(second, seconds, minute, minutes, hour, hours, day, days, month, months, year, years, block, blocks, Second, Seconds, Minute, Minutes, Hour, Hours, Day, Days, Month, Months, Year, Years, Block, Blocks)`
+- `cronAction` (optional): The cron tag action to use for the process. Defaults to "Cron".
 - `retry` (optional): Retry options with `count` and `delay` properties. By default, it will retry up to `3` times with a `1000` milliseconds delay between attempts.
 - `processId` (optional): The process id of existing process.
 - `minify` (optional): Reduce the size of the contract before deployment.

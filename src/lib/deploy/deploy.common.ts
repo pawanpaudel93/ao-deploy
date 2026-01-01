@@ -175,6 +175,7 @@ export class BaseDeploymentsManager {
     getContractSource,
     tags,
     cron,
+    cronAction,
     module,
     scheduler,
     retry,
@@ -301,7 +302,7 @@ export class BaseDeploymentsManager {
         tags = [
           ...tags,
           { name: "Cron-Interval", value: cron },
-          { name: "Cron-Tag-Action", value: "Cron" }
+          { name: "Cron-Tag-Action", value: cronAction || "Cron" }
         ];
       }
 
@@ -333,7 +334,7 @@ export class BaseDeploymentsManager {
         if (!isSharedWallet) {
           await walletInstance.close("success");
         }
-        return { name, processId, isNewProcess, configName };
+        return { name, processId, isNewProcess, configName, network };
       }
     }
 
@@ -392,7 +393,8 @@ export class BaseDeploymentsManager {
       processId: processId!,
       messageId: messageId!,
       isNewProcess,
-      configName
+      configName,
+      network
     };
   }
 

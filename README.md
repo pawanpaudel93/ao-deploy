@@ -8,7 +8,7 @@
 A package for deploying AO contracts with support for both Node.js and web environments.
 
 > [!Important]
-> **Mainnet is now the default!** Starting from the latest version, `ao-deploy` uses the **mainnet** network powered by Hyperbeam by default. If you need to deploy to the legacy network, use the `--network legacy` flag or set `network: "legacy"` in your configuration.
+> **Mainnet is now the default!** Starting from the latest version, `ao-deploy` uses the **mainnet** network powered by Hyperbeam by default. If you need to deploy to the legacy network, use the `--network legacy`, `--legacy` flag or set `network: "legacy"` in your configuration.
 
 ## Table of Contents
 

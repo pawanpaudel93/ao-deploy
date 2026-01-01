@@ -52,15 +52,13 @@ function logDeploymentDetails(result: DeployResult) {
   const logger = Logger.init(configName);
 
   if (isNewProcess) {
-    logger.log(`Deployed Process: ${processUrl}`);
+    logger.log(`✨ New process deployed: ${processUrl}`);
+  } else {
+    logger.log(`🔄 Existing process updated: ${processUrl}`);
   }
-  if (messageId) {
+  if (messageId && network === "legacy") {
     const messageUrl = chalk.green(`${aoExplorerUrl}/#/message/${messageId}`);
-    if (network === "legacy") {
-      logger.log(`Deployment Message: ${messageUrl}`);
-    } else {
-      logger.log(`Deployment Slot: ${messageId}`);
-    }
+    logger.log(`📨 Deployment message: ${messageUrl}`);
   }
 }
 
@@ -188,6 +186,7 @@ program
     "--force-spawn",
     "Force spawning a new process without checking for existing ones."
   )
+  .option("--legacy", "Deploy to legacy network.")
   .addOption(
     new Option("--network [network]", "Network to use for deployment.")
       .choices(["mainnet", "legacy"])
@@ -251,7 +250,7 @@ async function deploymentHandler() {
           browser: options.browser,
           browserProfile: options.browserProfile
         },
-        network: options.network
+        network: options.legacy ? "legacy" : options.network
       });
       logDeploymentDetails(result);
     } else {

@@ -157,6 +157,7 @@ Options:
   --blueprints [blueprints...]  Blueprints to use for the contract.
   --force-spawn                 Force spawning a new process without checking for existing ones. (default: false)
   --network [network]           Network to use for deployment. (choices: "mainnet", "legacy", default: "mainnet")
+  --legacy                      Deploy to legacy network. (default: false)
   -h, --help                    display help for command
 ```
 
@@ -187,6 +188,12 @@ To deploy to the legacy AO network:
 
 ```sh
 ao-deploy process.lua -n tictactoe -w wallet.json --network legacy
+```
+
+Or use the `--legacy` flag:
+
+```sh
+ao-deploy process.lua -n tictactoe -w wallet.json --legacy
 ```
 
 ##### Custom Hyperbeam Node

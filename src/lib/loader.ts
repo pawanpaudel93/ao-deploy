@@ -74,7 +74,7 @@ export class LuaProjectLoader {
 
   #createExecutableFromProject(project: Module[]) {
     const getModFnName = (name: string) =>
-      name.replace(/\./g, "_").replace(/^_/, "");
+      name.replace(/[.-]/g, "_").replace(/^_/, "");
     const contents: { name: string; path: string; code: string }[] = [];
 
     for (const mod of project) {
